@@ -1,7 +1,8 @@
 .PATH.S: ${.PARSEDIR}
-ECCPPFLAGS+=-DECP_NISTZ256_ASM
+ECCPPFLAGS+=-DECP_NISTZ256_ASM -DECP_SM2P256_ASM
 EC_SRCS += ecp_nistz256-armv8.S ecp_sm2p256-armv8.S sm3-armv8.S sm4-armv8.S
 EC_SRCS += vpsm4-armv8.S vpsm4_ex-armv8.S
+EC_SRCS += ecp_sm2p256.c ecp_sm2p256_table.c
 
 ECNI = yes
 .if ${MACHINE_ARCH} == "aarch64eb"

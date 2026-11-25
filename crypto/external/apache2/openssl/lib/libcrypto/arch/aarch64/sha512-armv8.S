@@ -63,18 +63,16 @@
 
 .text
 
-.globl	sha256_block_data_order
-.type	sha256_block_data_order,%function
+.globl	sha512_block_data_order
+.type	sha512_block_data_order,%function
 .align	6
-sha256_block_data_order:
+sha512_block_data_order:
 	AARCH64_VALID_CALL_TARGET
 #ifndef	__KERNEL__
 	adrp	x16,OPENSSL_armcap_P
 	ldr	w16,[x16,#:lo12:OPENSSL_armcap_P]
-	tst	w16,#ARMV8_SHA256
+	tst	w16,#ARMV8_SHA512
 	b.ne	.Lv8_entry
-	tst	w16,#ARMV7_NEON
-	b.ne	.Lneon_entry
 #endif
 	AARCH64_SIGN_LINK_REGISTER
 	stp	x29,x30,[sp,#-128]!
@@ -85,953 +83,953 @@ sha256_block_data_order:
 	stp	x23,x24,[sp,#48]
 	stp	x25,x26,[sp,#64]
 	stp	x27,x28,[sp,#80]
-	sub	sp,sp,#4*4
+	sub	sp,sp,#4*8
 
-	ldp	w20,w21,[x0]				// load context
-	ldp	w22,w23,[x0,#2*4]
-	ldp	w24,w25,[x0,#4*4]
-	add	x2,x1,x2,lsl#6	// end of input
-	ldp	w26,w27,[x0,#6*4]
-	adrp	x30,.LK256
-	add	x30,x30,#:lo12:.LK256
+	ldp	x20,x21,[x0]				// load context
+	ldp	x22,x23,[x0,#2*8]
+	ldp	x24,x25,[x0,#4*8]
+	add	x2,x1,x2,lsl#7	// end of input
+	ldp	x26,x27,[x0,#6*8]
+	adrp	x30,.LK512
+	add	x30,x30,#:lo12:.LK512
 	stp	x0,x2,[x29,#96]
 
 .Loop:
-	ldp	w3,w4,[x1],#2*4
-	ldr	w19,[x30],#4			// *K++
-	eor	w28,w21,w22				// magic seed
+	ldp	x3,x4,[x1],#2*8
+	ldr	x19,[x30],#8			// *K++
+	eor	x28,x21,x22				// magic seed
 	str	x1,[x29,#112]
 #ifndef	__AARCH64EB__
-	rev	w3,w3			// 0
+	rev	x3,x3			// 0
 #endif
-	ror	w16,w24,#6
-	add	w27,w27,w19			// h+=K[i]
-	eor	w6,w24,w24,ror#14
-	and	w17,w25,w24
-	bic	w19,w26,w24
-	add	w27,w27,w3			// h+=X[i]
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w20,w21			// a^b, b^c in next round
-	eor	w16,w16,w6,ror#11	// Sigma1(e)
-	ror	w6,w20,#2
-	add	w27,w27,w17			// h+=Ch(e,f,g)
-	eor	w17,w20,w20,ror#9
-	add	w27,w27,w16			// h+=Sigma1(e)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	add	w23,w23,w27			// d+=h
-	eor	w28,w28,w21			// Maj(a,b,c)
-	eor	w17,w6,w17,ror#13	// Sigma0(a)
-	add	w27,w27,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	//add	w27,w27,w17			// h+=Sigma0(a)
+	ror	x16,x24,#14
+	add	x27,x27,x19			// h+=K[i]
+	eor	x6,x24,x24,ror#23
+	and	x17,x25,x24
+	bic	x19,x26,x24
+	add	x27,x27,x3			// h+=X[i]
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x20,x21			// a^b, b^c in next round
+	eor	x16,x16,x6,ror#18	// Sigma1(e)
+	ror	x6,x20,#28
+	add	x27,x27,x17			// h+=Ch(e,f,g)
+	eor	x17,x20,x20,ror#5
+	add	x27,x27,x16			// h+=Sigma1(e)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	add	x23,x23,x27			// d+=h
+	eor	x28,x28,x21			// Maj(a,b,c)
+	eor	x17,x6,x17,ror#34	// Sigma0(a)
+	add	x27,x27,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	//add	x27,x27,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w4,w4			// 1
+	rev	x4,x4			// 1
 #endif
-	ldp	w5,w6,[x1],#2*4
-	add	w27,w27,w17			// h+=Sigma0(a)
-	ror	w16,w23,#6
-	add	w26,w26,w28			// h+=K[i]
-	eor	w7,w23,w23,ror#14
-	and	w17,w24,w23
-	bic	w28,w25,w23
-	add	w26,w26,w4			// h+=X[i]
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w27,w20			// a^b, b^c in next round
-	eor	w16,w16,w7,ror#11	// Sigma1(e)
-	ror	w7,w27,#2
-	add	w26,w26,w17			// h+=Ch(e,f,g)
-	eor	w17,w27,w27,ror#9
-	add	w26,w26,w16			// h+=Sigma1(e)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	add	w22,w22,w26			// d+=h
-	eor	w19,w19,w20			// Maj(a,b,c)
-	eor	w17,w7,w17,ror#13	// Sigma0(a)
-	add	w26,w26,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	//add	w26,w26,w17			// h+=Sigma0(a)
+	ldp	x5,x6,[x1],#2*8
+	add	x27,x27,x17			// h+=Sigma0(a)
+	ror	x16,x23,#14
+	add	x26,x26,x28			// h+=K[i]
+	eor	x7,x23,x23,ror#23
+	and	x17,x24,x23
+	bic	x28,x25,x23
+	add	x26,x26,x4			// h+=X[i]
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x27,x20			// a^b, b^c in next round
+	eor	x16,x16,x7,ror#18	// Sigma1(e)
+	ror	x7,x27,#28
+	add	x26,x26,x17			// h+=Ch(e,f,g)
+	eor	x17,x27,x27,ror#5
+	add	x26,x26,x16			// h+=Sigma1(e)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	add	x22,x22,x26			// d+=h
+	eor	x19,x19,x20			// Maj(a,b,c)
+	eor	x17,x7,x17,ror#34	// Sigma0(a)
+	add	x26,x26,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	//add	x26,x26,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w5,w5			// 2
+	rev	x5,x5			// 2
 #endif
-	add	w26,w26,w17			// h+=Sigma0(a)
-	ror	w16,w22,#6
-	add	w25,w25,w19			// h+=K[i]
-	eor	w8,w22,w22,ror#14
-	and	w17,w23,w22
-	bic	w19,w24,w22
-	add	w25,w25,w5			// h+=X[i]
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w26,w27			// a^b, b^c in next round
-	eor	w16,w16,w8,ror#11	// Sigma1(e)
-	ror	w8,w26,#2
-	add	w25,w25,w17			// h+=Ch(e,f,g)
-	eor	w17,w26,w26,ror#9
-	add	w25,w25,w16			// h+=Sigma1(e)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	add	w21,w21,w25			// d+=h
-	eor	w28,w28,w27			// Maj(a,b,c)
-	eor	w17,w8,w17,ror#13	// Sigma0(a)
-	add	w25,w25,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	//add	w25,w25,w17			// h+=Sigma0(a)
+	add	x26,x26,x17			// h+=Sigma0(a)
+	ror	x16,x22,#14
+	add	x25,x25,x19			// h+=K[i]
+	eor	x8,x22,x22,ror#23
+	and	x17,x23,x22
+	bic	x19,x24,x22
+	add	x25,x25,x5			// h+=X[i]
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x26,x27			// a^b, b^c in next round
+	eor	x16,x16,x8,ror#18	// Sigma1(e)
+	ror	x8,x26,#28
+	add	x25,x25,x17			// h+=Ch(e,f,g)
+	eor	x17,x26,x26,ror#5
+	add	x25,x25,x16			// h+=Sigma1(e)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	add	x21,x21,x25			// d+=h
+	eor	x28,x28,x27			// Maj(a,b,c)
+	eor	x17,x8,x17,ror#34	// Sigma0(a)
+	add	x25,x25,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	//add	x25,x25,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w6,w6			// 3
+	rev	x6,x6			// 3
 #endif
-	ldp	w7,w8,[x1],#2*4
-	add	w25,w25,w17			// h+=Sigma0(a)
-	ror	w16,w21,#6
-	add	w24,w24,w28			// h+=K[i]
-	eor	w9,w21,w21,ror#14
-	and	w17,w22,w21
-	bic	w28,w23,w21
-	add	w24,w24,w6			// h+=X[i]
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w25,w26			// a^b, b^c in next round
-	eor	w16,w16,w9,ror#11	// Sigma1(e)
-	ror	w9,w25,#2
-	add	w24,w24,w17			// h+=Ch(e,f,g)
-	eor	w17,w25,w25,ror#9
-	add	w24,w24,w16			// h+=Sigma1(e)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	add	w20,w20,w24			// d+=h
-	eor	w19,w19,w26			// Maj(a,b,c)
-	eor	w17,w9,w17,ror#13	// Sigma0(a)
-	add	w24,w24,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	//add	w24,w24,w17			// h+=Sigma0(a)
+	ldp	x7,x8,[x1],#2*8
+	add	x25,x25,x17			// h+=Sigma0(a)
+	ror	x16,x21,#14
+	add	x24,x24,x28			// h+=K[i]
+	eor	x9,x21,x21,ror#23
+	and	x17,x22,x21
+	bic	x28,x23,x21
+	add	x24,x24,x6			// h+=X[i]
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x25,x26			// a^b, b^c in next round
+	eor	x16,x16,x9,ror#18	// Sigma1(e)
+	ror	x9,x25,#28
+	add	x24,x24,x17			// h+=Ch(e,f,g)
+	eor	x17,x25,x25,ror#5
+	add	x24,x24,x16			// h+=Sigma1(e)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	add	x20,x20,x24			// d+=h
+	eor	x19,x19,x26			// Maj(a,b,c)
+	eor	x17,x9,x17,ror#34	// Sigma0(a)
+	add	x24,x24,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	//add	x24,x24,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w7,w7			// 4
+	rev	x7,x7			// 4
 #endif
-	add	w24,w24,w17			// h+=Sigma0(a)
-	ror	w16,w20,#6
-	add	w23,w23,w19			// h+=K[i]
-	eor	w10,w20,w20,ror#14
-	and	w17,w21,w20
-	bic	w19,w22,w20
-	add	w23,w23,w7			// h+=X[i]
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w24,w25			// a^b, b^c in next round
-	eor	w16,w16,w10,ror#11	// Sigma1(e)
-	ror	w10,w24,#2
-	add	w23,w23,w17			// h+=Ch(e,f,g)
-	eor	w17,w24,w24,ror#9
-	add	w23,w23,w16			// h+=Sigma1(e)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	add	w27,w27,w23			// d+=h
-	eor	w28,w28,w25			// Maj(a,b,c)
-	eor	w17,w10,w17,ror#13	// Sigma0(a)
-	add	w23,w23,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	//add	w23,w23,w17			// h+=Sigma0(a)
+	add	x24,x24,x17			// h+=Sigma0(a)
+	ror	x16,x20,#14
+	add	x23,x23,x19			// h+=K[i]
+	eor	x10,x20,x20,ror#23
+	and	x17,x21,x20
+	bic	x19,x22,x20
+	add	x23,x23,x7			// h+=X[i]
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x24,x25			// a^b, b^c in next round
+	eor	x16,x16,x10,ror#18	// Sigma1(e)
+	ror	x10,x24,#28
+	add	x23,x23,x17			// h+=Ch(e,f,g)
+	eor	x17,x24,x24,ror#5
+	add	x23,x23,x16			// h+=Sigma1(e)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	add	x27,x27,x23			// d+=h
+	eor	x28,x28,x25			// Maj(a,b,c)
+	eor	x17,x10,x17,ror#34	// Sigma0(a)
+	add	x23,x23,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	//add	x23,x23,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w8,w8			// 5
+	rev	x8,x8			// 5
 #endif
-	ldp	w9,w10,[x1],#2*4
-	add	w23,w23,w17			// h+=Sigma0(a)
-	ror	w16,w27,#6
-	add	w22,w22,w28			// h+=K[i]
-	eor	w11,w27,w27,ror#14
-	and	w17,w20,w27
-	bic	w28,w21,w27
-	add	w22,w22,w8			// h+=X[i]
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w23,w24			// a^b, b^c in next round
-	eor	w16,w16,w11,ror#11	// Sigma1(e)
-	ror	w11,w23,#2
-	add	w22,w22,w17			// h+=Ch(e,f,g)
-	eor	w17,w23,w23,ror#9
-	add	w22,w22,w16			// h+=Sigma1(e)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	add	w26,w26,w22			// d+=h
-	eor	w19,w19,w24			// Maj(a,b,c)
-	eor	w17,w11,w17,ror#13	// Sigma0(a)
-	add	w22,w22,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	//add	w22,w22,w17			// h+=Sigma0(a)
+	ldp	x9,x10,[x1],#2*8
+	add	x23,x23,x17			// h+=Sigma0(a)
+	ror	x16,x27,#14
+	add	x22,x22,x28			// h+=K[i]
+	eor	x11,x27,x27,ror#23
+	and	x17,x20,x27
+	bic	x28,x21,x27
+	add	x22,x22,x8			// h+=X[i]
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x23,x24			// a^b, b^c in next round
+	eor	x16,x16,x11,ror#18	// Sigma1(e)
+	ror	x11,x23,#28
+	add	x22,x22,x17			// h+=Ch(e,f,g)
+	eor	x17,x23,x23,ror#5
+	add	x22,x22,x16			// h+=Sigma1(e)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	add	x26,x26,x22			// d+=h
+	eor	x19,x19,x24			// Maj(a,b,c)
+	eor	x17,x11,x17,ror#34	// Sigma0(a)
+	add	x22,x22,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	//add	x22,x22,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w9,w9			// 6
+	rev	x9,x9			// 6
 #endif
-	add	w22,w22,w17			// h+=Sigma0(a)
-	ror	w16,w26,#6
-	add	w21,w21,w19			// h+=K[i]
-	eor	w12,w26,w26,ror#14
-	and	w17,w27,w26
-	bic	w19,w20,w26
-	add	w21,w21,w9			// h+=X[i]
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w22,w23			// a^b, b^c in next round
-	eor	w16,w16,w12,ror#11	// Sigma1(e)
-	ror	w12,w22,#2
-	add	w21,w21,w17			// h+=Ch(e,f,g)
-	eor	w17,w22,w22,ror#9
-	add	w21,w21,w16			// h+=Sigma1(e)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	add	w25,w25,w21			// d+=h
-	eor	w28,w28,w23			// Maj(a,b,c)
-	eor	w17,w12,w17,ror#13	// Sigma0(a)
-	add	w21,w21,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	//add	w21,w21,w17			// h+=Sigma0(a)
+	add	x22,x22,x17			// h+=Sigma0(a)
+	ror	x16,x26,#14
+	add	x21,x21,x19			// h+=K[i]
+	eor	x12,x26,x26,ror#23
+	and	x17,x27,x26
+	bic	x19,x20,x26
+	add	x21,x21,x9			// h+=X[i]
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x22,x23			// a^b, b^c in next round
+	eor	x16,x16,x12,ror#18	// Sigma1(e)
+	ror	x12,x22,#28
+	add	x21,x21,x17			// h+=Ch(e,f,g)
+	eor	x17,x22,x22,ror#5
+	add	x21,x21,x16			// h+=Sigma1(e)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	add	x25,x25,x21			// d+=h
+	eor	x28,x28,x23			// Maj(a,b,c)
+	eor	x17,x12,x17,ror#34	// Sigma0(a)
+	add	x21,x21,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	//add	x21,x21,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w10,w10			// 7
+	rev	x10,x10			// 7
 #endif
-	ldp	w11,w12,[x1],#2*4
-	add	w21,w21,w17			// h+=Sigma0(a)
-	ror	w16,w25,#6
-	add	w20,w20,w28			// h+=K[i]
-	eor	w13,w25,w25,ror#14
-	and	w17,w26,w25
-	bic	w28,w27,w25
-	add	w20,w20,w10			// h+=X[i]
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w21,w22			// a^b, b^c in next round
-	eor	w16,w16,w13,ror#11	// Sigma1(e)
-	ror	w13,w21,#2
-	add	w20,w20,w17			// h+=Ch(e,f,g)
-	eor	w17,w21,w21,ror#9
-	add	w20,w20,w16			// h+=Sigma1(e)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	add	w24,w24,w20			// d+=h
-	eor	w19,w19,w22			// Maj(a,b,c)
-	eor	w17,w13,w17,ror#13	// Sigma0(a)
-	add	w20,w20,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	//add	w20,w20,w17			// h+=Sigma0(a)
+	ldp	x11,x12,[x1],#2*8
+	add	x21,x21,x17			// h+=Sigma0(a)
+	ror	x16,x25,#14
+	add	x20,x20,x28			// h+=K[i]
+	eor	x13,x25,x25,ror#23
+	and	x17,x26,x25
+	bic	x28,x27,x25
+	add	x20,x20,x10			// h+=X[i]
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x21,x22			// a^b, b^c in next round
+	eor	x16,x16,x13,ror#18	// Sigma1(e)
+	ror	x13,x21,#28
+	add	x20,x20,x17			// h+=Ch(e,f,g)
+	eor	x17,x21,x21,ror#5
+	add	x20,x20,x16			// h+=Sigma1(e)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	add	x24,x24,x20			// d+=h
+	eor	x19,x19,x22			// Maj(a,b,c)
+	eor	x17,x13,x17,ror#34	// Sigma0(a)
+	add	x20,x20,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	//add	x20,x20,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w11,w11			// 8
+	rev	x11,x11			// 8
 #endif
-	add	w20,w20,w17			// h+=Sigma0(a)
-	ror	w16,w24,#6
-	add	w27,w27,w19			// h+=K[i]
-	eor	w14,w24,w24,ror#14
-	and	w17,w25,w24
-	bic	w19,w26,w24
-	add	w27,w27,w11			// h+=X[i]
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w20,w21			// a^b, b^c in next round
-	eor	w16,w16,w14,ror#11	// Sigma1(e)
-	ror	w14,w20,#2
-	add	w27,w27,w17			// h+=Ch(e,f,g)
-	eor	w17,w20,w20,ror#9
-	add	w27,w27,w16			// h+=Sigma1(e)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	add	w23,w23,w27			// d+=h
-	eor	w28,w28,w21			// Maj(a,b,c)
-	eor	w17,w14,w17,ror#13	// Sigma0(a)
-	add	w27,w27,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	//add	w27,w27,w17			// h+=Sigma0(a)
+	add	x20,x20,x17			// h+=Sigma0(a)
+	ror	x16,x24,#14
+	add	x27,x27,x19			// h+=K[i]
+	eor	x14,x24,x24,ror#23
+	and	x17,x25,x24
+	bic	x19,x26,x24
+	add	x27,x27,x11			// h+=X[i]
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x20,x21			// a^b, b^c in next round
+	eor	x16,x16,x14,ror#18	// Sigma1(e)
+	ror	x14,x20,#28
+	add	x27,x27,x17			// h+=Ch(e,f,g)
+	eor	x17,x20,x20,ror#5
+	add	x27,x27,x16			// h+=Sigma1(e)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	add	x23,x23,x27			// d+=h
+	eor	x28,x28,x21			// Maj(a,b,c)
+	eor	x17,x14,x17,ror#34	// Sigma0(a)
+	add	x27,x27,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	//add	x27,x27,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w12,w12			// 9
+	rev	x12,x12			// 9
 #endif
-	ldp	w13,w14,[x1],#2*4
-	add	w27,w27,w17			// h+=Sigma0(a)
-	ror	w16,w23,#6
-	add	w26,w26,w28			// h+=K[i]
-	eor	w15,w23,w23,ror#14
-	and	w17,w24,w23
-	bic	w28,w25,w23
-	add	w26,w26,w12			// h+=X[i]
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w27,w20			// a^b, b^c in next round
-	eor	w16,w16,w15,ror#11	// Sigma1(e)
-	ror	w15,w27,#2
-	add	w26,w26,w17			// h+=Ch(e,f,g)
-	eor	w17,w27,w27,ror#9
-	add	w26,w26,w16			// h+=Sigma1(e)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	add	w22,w22,w26			// d+=h
-	eor	w19,w19,w20			// Maj(a,b,c)
-	eor	w17,w15,w17,ror#13	// Sigma0(a)
-	add	w26,w26,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	//add	w26,w26,w17			// h+=Sigma0(a)
+	ldp	x13,x14,[x1],#2*8
+	add	x27,x27,x17			// h+=Sigma0(a)
+	ror	x16,x23,#14
+	add	x26,x26,x28			// h+=K[i]
+	eor	x15,x23,x23,ror#23
+	and	x17,x24,x23
+	bic	x28,x25,x23
+	add	x26,x26,x12			// h+=X[i]
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x27,x20			// a^b, b^c in next round
+	eor	x16,x16,x15,ror#18	// Sigma1(e)
+	ror	x15,x27,#28
+	add	x26,x26,x17			// h+=Ch(e,f,g)
+	eor	x17,x27,x27,ror#5
+	add	x26,x26,x16			// h+=Sigma1(e)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	add	x22,x22,x26			// d+=h
+	eor	x19,x19,x20			// Maj(a,b,c)
+	eor	x17,x15,x17,ror#34	// Sigma0(a)
+	add	x26,x26,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	//add	x26,x26,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w13,w13			// 10
+	rev	x13,x13			// 10
 #endif
-	add	w26,w26,w17			// h+=Sigma0(a)
-	ror	w16,w22,#6
-	add	w25,w25,w19			// h+=K[i]
-	eor	w0,w22,w22,ror#14
-	and	w17,w23,w22
-	bic	w19,w24,w22
-	add	w25,w25,w13			// h+=X[i]
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w26,w27			// a^b, b^c in next round
-	eor	w16,w16,w0,ror#11	// Sigma1(e)
-	ror	w0,w26,#2
-	add	w25,w25,w17			// h+=Ch(e,f,g)
-	eor	w17,w26,w26,ror#9
-	add	w25,w25,w16			// h+=Sigma1(e)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	add	w21,w21,w25			// d+=h
-	eor	w28,w28,w27			// Maj(a,b,c)
-	eor	w17,w0,w17,ror#13	// Sigma0(a)
-	add	w25,w25,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	//add	w25,w25,w17			// h+=Sigma0(a)
+	add	x26,x26,x17			// h+=Sigma0(a)
+	ror	x16,x22,#14
+	add	x25,x25,x19			// h+=K[i]
+	eor	x0,x22,x22,ror#23
+	and	x17,x23,x22
+	bic	x19,x24,x22
+	add	x25,x25,x13			// h+=X[i]
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x26,x27			// a^b, b^c in next round
+	eor	x16,x16,x0,ror#18	// Sigma1(e)
+	ror	x0,x26,#28
+	add	x25,x25,x17			// h+=Ch(e,f,g)
+	eor	x17,x26,x26,ror#5
+	add	x25,x25,x16			// h+=Sigma1(e)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	add	x21,x21,x25			// d+=h
+	eor	x28,x28,x27			// Maj(a,b,c)
+	eor	x17,x0,x17,ror#34	// Sigma0(a)
+	add	x25,x25,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	//add	x25,x25,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w14,w14			// 11
+	rev	x14,x14			// 11
 #endif
-	ldp	w15,w0,[x1],#2*4
-	add	w25,w25,w17			// h+=Sigma0(a)
-	str	w6,[sp,#12]
-	ror	w16,w21,#6
-	add	w24,w24,w28			// h+=K[i]
-	eor	w6,w21,w21,ror#14
-	and	w17,w22,w21
-	bic	w28,w23,w21
-	add	w24,w24,w14			// h+=X[i]
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w25,w26			// a^b, b^c in next round
-	eor	w16,w16,w6,ror#11	// Sigma1(e)
-	ror	w6,w25,#2
-	add	w24,w24,w17			// h+=Ch(e,f,g)
-	eor	w17,w25,w25,ror#9
-	add	w24,w24,w16			// h+=Sigma1(e)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	add	w20,w20,w24			// d+=h
-	eor	w19,w19,w26			// Maj(a,b,c)
-	eor	w17,w6,w17,ror#13	// Sigma0(a)
-	add	w24,w24,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	//add	w24,w24,w17			// h+=Sigma0(a)
+	ldp	x15,x0,[x1],#2*8
+	add	x25,x25,x17			// h+=Sigma0(a)
+	str	x6,[sp,#24]
+	ror	x16,x21,#14
+	add	x24,x24,x28			// h+=K[i]
+	eor	x6,x21,x21,ror#23
+	and	x17,x22,x21
+	bic	x28,x23,x21
+	add	x24,x24,x14			// h+=X[i]
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x25,x26			// a^b, b^c in next round
+	eor	x16,x16,x6,ror#18	// Sigma1(e)
+	ror	x6,x25,#28
+	add	x24,x24,x17			// h+=Ch(e,f,g)
+	eor	x17,x25,x25,ror#5
+	add	x24,x24,x16			// h+=Sigma1(e)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	add	x20,x20,x24			// d+=h
+	eor	x19,x19,x26			// Maj(a,b,c)
+	eor	x17,x6,x17,ror#34	// Sigma0(a)
+	add	x24,x24,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	//add	x24,x24,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w15,w15			// 12
+	rev	x15,x15			// 12
 #endif
-	add	w24,w24,w17			// h+=Sigma0(a)
-	str	w7,[sp,#0]
-	ror	w16,w20,#6
-	add	w23,w23,w19			// h+=K[i]
-	eor	w7,w20,w20,ror#14
-	and	w17,w21,w20
-	bic	w19,w22,w20
-	add	w23,w23,w15			// h+=X[i]
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w24,w25			// a^b, b^c in next round
-	eor	w16,w16,w7,ror#11	// Sigma1(e)
-	ror	w7,w24,#2
-	add	w23,w23,w17			// h+=Ch(e,f,g)
-	eor	w17,w24,w24,ror#9
-	add	w23,w23,w16			// h+=Sigma1(e)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	add	w27,w27,w23			// d+=h
-	eor	w28,w28,w25			// Maj(a,b,c)
-	eor	w17,w7,w17,ror#13	// Sigma0(a)
-	add	w23,w23,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	//add	w23,w23,w17			// h+=Sigma0(a)
+	add	x24,x24,x17			// h+=Sigma0(a)
+	str	x7,[sp,#0]
+	ror	x16,x20,#14
+	add	x23,x23,x19			// h+=K[i]
+	eor	x7,x20,x20,ror#23
+	and	x17,x21,x20
+	bic	x19,x22,x20
+	add	x23,x23,x15			// h+=X[i]
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x24,x25			// a^b, b^c in next round
+	eor	x16,x16,x7,ror#18	// Sigma1(e)
+	ror	x7,x24,#28
+	add	x23,x23,x17			// h+=Ch(e,f,g)
+	eor	x17,x24,x24,ror#5
+	add	x23,x23,x16			// h+=Sigma1(e)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	add	x27,x27,x23			// d+=h
+	eor	x28,x28,x25			// Maj(a,b,c)
+	eor	x17,x7,x17,ror#34	// Sigma0(a)
+	add	x23,x23,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	//add	x23,x23,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w0,w0			// 13
+	rev	x0,x0			// 13
 #endif
-	ldp	w1,w2,[x1]
-	add	w23,w23,w17			// h+=Sigma0(a)
-	str	w8,[sp,#4]
-	ror	w16,w27,#6
-	add	w22,w22,w28			// h+=K[i]
-	eor	w8,w27,w27,ror#14
-	and	w17,w20,w27
-	bic	w28,w21,w27
-	add	w22,w22,w0			// h+=X[i]
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w23,w24			// a^b, b^c in next round
-	eor	w16,w16,w8,ror#11	// Sigma1(e)
-	ror	w8,w23,#2
-	add	w22,w22,w17			// h+=Ch(e,f,g)
-	eor	w17,w23,w23,ror#9
-	add	w22,w22,w16			// h+=Sigma1(e)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	add	w26,w26,w22			// d+=h
-	eor	w19,w19,w24			// Maj(a,b,c)
-	eor	w17,w8,w17,ror#13	// Sigma0(a)
-	add	w22,w22,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	//add	w22,w22,w17			// h+=Sigma0(a)
+	ldp	x1,x2,[x1]
+	add	x23,x23,x17			// h+=Sigma0(a)
+	str	x8,[sp,#8]
+	ror	x16,x27,#14
+	add	x22,x22,x28			// h+=K[i]
+	eor	x8,x27,x27,ror#23
+	and	x17,x20,x27
+	bic	x28,x21,x27
+	add	x22,x22,x0			// h+=X[i]
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x23,x24			// a^b, b^c in next round
+	eor	x16,x16,x8,ror#18	// Sigma1(e)
+	ror	x8,x23,#28
+	add	x22,x22,x17			// h+=Ch(e,f,g)
+	eor	x17,x23,x23,ror#5
+	add	x22,x22,x16			// h+=Sigma1(e)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	add	x26,x26,x22			// d+=h
+	eor	x19,x19,x24			// Maj(a,b,c)
+	eor	x17,x8,x17,ror#34	// Sigma0(a)
+	add	x22,x22,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	//add	x22,x22,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w1,w1			// 14
+	rev	x1,x1			// 14
 #endif
-	ldr	w6,[sp,#12]
-	add	w22,w22,w17			// h+=Sigma0(a)
-	str	w9,[sp,#8]
-	ror	w16,w26,#6
-	add	w21,w21,w19			// h+=K[i]
-	eor	w9,w26,w26,ror#14
-	and	w17,w27,w26
-	bic	w19,w20,w26
-	add	w21,w21,w1			// h+=X[i]
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w22,w23			// a^b, b^c in next round
-	eor	w16,w16,w9,ror#11	// Sigma1(e)
-	ror	w9,w22,#2
-	add	w21,w21,w17			// h+=Ch(e,f,g)
-	eor	w17,w22,w22,ror#9
-	add	w21,w21,w16			// h+=Sigma1(e)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	add	w25,w25,w21			// d+=h
-	eor	w28,w28,w23			// Maj(a,b,c)
-	eor	w17,w9,w17,ror#13	// Sigma0(a)
-	add	w21,w21,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	//add	w21,w21,w17			// h+=Sigma0(a)
+	ldr	x6,[sp,#24]
+	add	x22,x22,x17			// h+=Sigma0(a)
+	str	x9,[sp,#16]
+	ror	x16,x26,#14
+	add	x21,x21,x19			// h+=K[i]
+	eor	x9,x26,x26,ror#23
+	and	x17,x27,x26
+	bic	x19,x20,x26
+	add	x21,x21,x1			// h+=X[i]
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x22,x23			// a^b, b^c in next round
+	eor	x16,x16,x9,ror#18	// Sigma1(e)
+	ror	x9,x22,#28
+	add	x21,x21,x17			// h+=Ch(e,f,g)
+	eor	x17,x22,x22,ror#5
+	add	x21,x21,x16			// h+=Sigma1(e)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	add	x25,x25,x21			// d+=h
+	eor	x28,x28,x23			// Maj(a,b,c)
+	eor	x17,x9,x17,ror#34	// Sigma0(a)
+	add	x21,x21,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	//add	x21,x21,x17			// h+=Sigma0(a)
 #ifndef	__AARCH64EB__
-	rev	w2,w2			// 15
+	rev	x2,x2			// 15
 #endif
-	ldr	w7,[sp,#0]
-	add	w21,w21,w17			// h+=Sigma0(a)
-	str	w10,[sp,#12]
-	ror	w16,w25,#6
-	add	w20,w20,w28			// h+=K[i]
-	ror	w9,w4,#7
-	and	w17,w26,w25
-	ror	w8,w1,#17
-	bic	w28,w27,w25
-	ror	w10,w21,#2
-	add	w20,w20,w2			// h+=X[i]
-	eor	w16,w16,w25,ror#11
-	eor	w9,w9,w4,ror#18
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w21,w22			// a^b, b^c in next round
-	eor	w16,w16,w25,ror#25	// Sigma1(e)
-	eor	w10,w10,w21,ror#13
-	add	w20,w20,w17			// h+=Ch(e,f,g)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	eor	w8,w8,w1,ror#19
-	eor	w9,w9,w4,lsr#3	// sigma0(X[i+1])
-	add	w20,w20,w16			// h+=Sigma1(e)
-	eor	w19,w19,w22			// Maj(a,b,c)
-	eor	w17,w10,w21,ror#22	// Sigma0(a)
-	eor	w8,w8,w1,lsr#10	// sigma1(X[i+14])
-	add	w3,w3,w12
-	add	w24,w24,w20			// d+=h
-	add	w20,w20,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	add	w3,w3,w9
-	add	w20,w20,w17			// h+=Sigma0(a)
-	add	w3,w3,w8
+	ldr	x7,[sp,#0]
+	add	x21,x21,x17			// h+=Sigma0(a)
+	str	x10,[sp,#24]
+	ror	x16,x25,#14
+	add	x20,x20,x28			// h+=K[i]
+	ror	x9,x4,#1
+	and	x17,x26,x25
+	ror	x8,x1,#19
+	bic	x28,x27,x25
+	ror	x10,x21,#28
+	add	x20,x20,x2			// h+=X[i]
+	eor	x16,x16,x25,ror#18
+	eor	x9,x9,x4,ror#8
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x21,x22			// a^b, b^c in next round
+	eor	x16,x16,x25,ror#41	// Sigma1(e)
+	eor	x10,x10,x21,ror#34
+	add	x20,x20,x17			// h+=Ch(e,f,g)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	eor	x8,x8,x1,ror#61
+	eor	x9,x9,x4,lsr#7	// sigma0(X[i+1])
+	add	x20,x20,x16			// h+=Sigma1(e)
+	eor	x19,x19,x22			// Maj(a,b,c)
+	eor	x17,x10,x21,ror#39	// Sigma0(a)
+	eor	x8,x8,x1,lsr#6	// sigma1(X[i+14])
+	add	x3,x3,x12
+	add	x24,x24,x20			// d+=h
+	add	x20,x20,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	add	x3,x3,x9
+	add	x20,x20,x17			// h+=Sigma0(a)
+	add	x3,x3,x8
 .Loop_16_xx:
-	ldr	w8,[sp,#4]
-	str	w11,[sp,#0]
-	ror	w16,w24,#6
-	add	w27,w27,w19			// h+=K[i]
-	ror	w10,w5,#7
-	and	w17,w25,w24
-	ror	w9,w2,#17
-	bic	w19,w26,w24
-	ror	w11,w20,#2
-	add	w27,w27,w3			// h+=X[i]
-	eor	w16,w16,w24,ror#11
-	eor	w10,w10,w5,ror#18
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w20,w21			// a^b, b^c in next round
-	eor	w16,w16,w24,ror#25	// Sigma1(e)
-	eor	w11,w11,w20,ror#13
-	add	w27,w27,w17			// h+=Ch(e,f,g)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	eor	w9,w9,w2,ror#19
-	eor	w10,w10,w5,lsr#3	// sigma0(X[i+1])
-	add	w27,w27,w16			// h+=Sigma1(e)
-	eor	w28,w28,w21			// Maj(a,b,c)
-	eor	w17,w11,w20,ror#22	// Sigma0(a)
-	eor	w9,w9,w2,lsr#10	// sigma1(X[i+14])
-	add	w4,w4,w13
-	add	w23,w23,w27			// d+=h
-	add	w27,w27,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	add	w4,w4,w10
-	add	w27,w27,w17			// h+=Sigma0(a)
-	add	w4,w4,w9
-	ldr	w9,[sp,#8]
-	str	w12,[sp,#4]
-	ror	w16,w23,#6
-	add	w26,w26,w28			// h+=K[i]
-	ror	w11,w6,#7
-	and	w17,w24,w23
-	ror	w10,w3,#17
-	bic	w28,w25,w23
-	ror	w12,w27,#2
-	add	w26,w26,w4			// h+=X[i]
-	eor	w16,w16,w23,ror#11
-	eor	w11,w11,w6,ror#18
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w27,w20			// a^b, b^c in next round
-	eor	w16,w16,w23,ror#25	// Sigma1(e)
-	eor	w12,w12,w27,ror#13
-	add	w26,w26,w17			// h+=Ch(e,f,g)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	eor	w10,w10,w3,ror#19
-	eor	w11,w11,w6,lsr#3	// sigma0(X[i+1])
-	add	w26,w26,w16			// h+=Sigma1(e)
-	eor	w19,w19,w20			// Maj(a,b,c)
-	eor	w17,w12,w27,ror#22	// Sigma0(a)
-	eor	w10,w10,w3,lsr#10	// sigma1(X[i+14])
-	add	w5,w5,w14
-	add	w22,w22,w26			// d+=h
-	add	w26,w26,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	add	w5,w5,w11
-	add	w26,w26,w17			// h+=Sigma0(a)
-	add	w5,w5,w10
-	ldr	w10,[sp,#12]
-	str	w13,[sp,#8]
-	ror	w16,w22,#6
-	add	w25,w25,w19			// h+=K[i]
-	ror	w12,w7,#7
-	and	w17,w23,w22
-	ror	w11,w4,#17
-	bic	w19,w24,w22
-	ror	w13,w26,#2
-	add	w25,w25,w5			// h+=X[i]
-	eor	w16,w16,w22,ror#11
-	eor	w12,w12,w7,ror#18
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w26,w27			// a^b, b^c in next round
-	eor	w16,w16,w22,ror#25	// Sigma1(e)
-	eor	w13,w13,w26,ror#13
-	add	w25,w25,w17			// h+=Ch(e,f,g)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	eor	w11,w11,w4,ror#19
-	eor	w12,w12,w7,lsr#3	// sigma0(X[i+1])
-	add	w25,w25,w16			// h+=Sigma1(e)
-	eor	w28,w28,w27			// Maj(a,b,c)
-	eor	w17,w13,w26,ror#22	// Sigma0(a)
-	eor	w11,w11,w4,lsr#10	// sigma1(X[i+14])
-	add	w6,w6,w15
-	add	w21,w21,w25			// d+=h
-	add	w25,w25,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	add	w6,w6,w12
-	add	w25,w25,w17			// h+=Sigma0(a)
-	add	w6,w6,w11
-	ldr	w11,[sp,#0]
-	str	w14,[sp,#12]
-	ror	w16,w21,#6
-	add	w24,w24,w28			// h+=K[i]
-	ror	w13,w8,#7
-	and	w17,w22,w21
-	ror	w12,w5,#17
-	bic	w28,w23,w21
-	ror	w14,w25,#2
-	add	w24,w24,w6			// h+=X[i]
-	eor	w16,w16,w21,ror#11
-	eor	w13,w13,w8,ror#18
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w25,w26			// a^b, b^c in next round
-	eor	w16,w16,w21,ror#25	// Sigma1(e)
-	eor	w14,w14,w25,ror#13
-	add	w24,w24,w17			// h+=Ch(e,f,g)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	eor	w12,w12,w5,ror#19
-	eor	w13,w13,w8,lsr#3	// sigma0(X[i+1])
-	add	w24,w24,w16			// h+=Sigma1(e)
-	eor	w19,w19,w26			// Maj(a,b,c)
-	eor	w17,w14,w25,ror#22	// Sigma0(a)
-	eor	w12,w12,w5,lsr#10	// sigma1(X[i+14])
-	add	w7,w7,w0
-	add	w20,w20,w24			// d+=h
-	add	w24,w24,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	add	w7,w7,w13
-	add	w24,w24,w17			// h+=Sigma0(a)
-	add	w7,w7,w12
-	ldr	w12,[sp,#4]
-	str	w15,[sp,#0]
-	ror	w16,w20,#6
-	add	w23,w23,w19			// h+=K[i]
-	ror	w14,w9,#7
-	and	w17,w21,w20
-	ror	w13,w6,#17
-	bic	w19,w22,w20
-	ror	w15,w24,#2
-	add	w23,w23,w7			// h+=X[i]
-	eor	w16,w16,w20,ror#11
-	eor	w14,w14,w9,ror#18
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w24,w25			// a^b, b^c in next round
-	eor	w16,w16,w20,ror#25	// Sigma1(e)
-	eor	w15,w15,w24,ror#13
-	add	w23,w23,w17			// h+=Ch(e,f,g)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	eor	w13,w13,w6,ror#19
-	eor	w14,w14,w9,lsr#3	// sigma0(X[i+1])
-	add	w23,w23,w16			// h+=Sigma1(e)
-	eor	w28,w28,w25			// Maj(a,b,c)
-	eor	w17,w15,w24,ror#22	// Sigma0(a)
-	eor	w13,w13,w6,lsr#10	// sigma1(X[i+14])
-	add	w8,w8,w1
-	add	w27,w27,w23			// d+=h
-	add	w23,w23,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	add	w8,w8,w14
-	add	w23,w23,w17			// h+=Sigma0(a)
-	add	w8,w8,w13
-	ldr	w13,[sp,#8]
-	str	w0,[sp,#4]
-	ror	w16,w27,#6
-	add	w22,w22,w28			// h+=K[i]
-	ror	w15,w10,#7
-	and	w17,w20,w27
-	ror	w14,w7,#17
-	bic	w28,w21,w27
-	ror	w0,w23,#2
-	add	w22,w22,w8			// h+=X[i]
-	eor	w16,w16,w27,ror#11
-	eor	w15,w15,w10,ror#18
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w23,w24			// a^b, b^c in next round
-	eor	w16,w16,w27,ror#25	// Sigma1(e)
-	eor	w0,w0,w23,ror#13
-	add	w22,w22,w17			// h+=Ch(e,f,g)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	eor	w14,w14,w7,ror#19
-	eor	w15,w15,w10,lsr#3	// sigma0(X[i+1])
-	add	w22,w22,w16			// h+=Sigma1(e)
-	eor	w19,w19,w24			// Maj(a,b,c)
-	eor	w17,w0,w23,ror#22	// Sigma0(a)
-	eor	w14,w14,w7,lsr#10	// sigma1(X[i+14])
-	add	w9,w9,w2
-	add	w26,w26,w22			// d+=h
-	add	w22,w22,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	add	w9,w9,w15
-	add	w22,w22,w17			// h+=Sigma0(a)
-	add	w9,w9,w14
-	ldr	w14,[sp,#12]
-	str	w1,[sp,#8]
-	ror	w16,w26,#6
-	add	w21,w21,w19			// h+=K[i]
-	ror	w0,w11,#7
-	and	w17,w27,w26
-	ror	w15,w8,#17
-	bic	w19,w20,w26
-	ror	w1,w22,#2
-	add	w21,w21,w9			// h+=X[i]
-	eor	w16,w16,w26,ror#11
-	eor	w0,w0,w11,ror#18
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w22,w23			// a^b, b^c in next round
-	eor	w16,w16,w26,ror#25	// Sigma1(e)
-	eor	w1,w1,w22,ror#13
-	add	w21,w21,w17			// h+=Ch(e,f,g)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	eor	w15,w15,w8,ror#19
-	eor	w0,w0,w11,lsr#3	// sigma0(X[i+1])
-	add	w21,w21,w16			// h+=Sigma1(e)
-	eor	w28,w28,w23			// Maj(a,b,c)
-	eor	w17,w1,w22,ror#22	// Sigma0(a)
-	eor	w15,w15,w8,lsr#10	// sigma1(X[i+14])
-	add	w10,w10,w3
-	add	w25,w25,w21			// d+=h
-	add	w21,w21,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	add	w10,w10,w0
-	add	w21,w21,w17			// h+=Sigma0(a)
-	add	w10,w10,w15
-	ldr	w15,[sp,#0]
-	str	w2,[sp,#12]
-	ror	w16,w25,#6
-	add	w20,w20,w28			// h+=K[i]
-	ror	w1,w12,#7
-	and	w17,w26,w25
-	ror	w0,w9,#17
-	bic	w28,w27,w25
-	ror	w2,w21,#2
-	add	w20,w20,w10			// h+=X[i]
-	eor	w16,w16,w25,ror#11
-	eor	w1,w1,w12,ror#18
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w21,w22			// a^b, b^c in next round
-	eor	w16,w16,w25,ror#25	// Sigma1(e)
-	eor	w2,w2,w21,ror#13
-	add	w20,w20,w17			// h+=Ch(e,f,g)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	eor	w0,w0,w9,ror#19
-	eor	w1,w1,w12,lsr#3	// sigma0(X[i+1])
-	add	w20,w20,w16			// h+=Sigma1(e)
-	eor	w19,w19,w22			// Maj(a,b,c)
-	eor	w17,w2,w21,ror#22	// Sigma0(a)
-	eor	w0,w0,w9,lsr#10	// sigma1(X[i+14])
-	add	w11,w11,w4
-	add	w24,w24,w20			// d+=h
-	add	w20,w20,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	add	w11,w11,w1
-	add	w20,w20,w17			// h+=Sigma0(a)
-	add	w11,w11,w0
-	ldr	w0,[sp,#4]
-	str	w3,[sp,#0]
-	ror	w16,w24,#6
-	add	w27,w27,w19			// h+=K[i]
-	ror	w2,w13,#7
-	and	w17,w25,w24
-	ror	w1,w10,#17
-	bic	w19,w26,w24
-	ror	w3,w20,#2
-	add	w27,w27,w11			// h+=X[i]
-	eor	w16,w16,w24,ror#11
-	eor	w2,w2,w13,ror#18
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w20,w21			// a^b, b^c in next round
-	eor	w16,w16,w24,ror#25	// Sigma1(e)
-	eor	w3,w3,w20,ror#13
-	add	w27,w27,w17			// h+=Ch(e,f,g)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	eor	w1,w1,w10,ror#19
-	eor	w2,w2,w13,lsr#3	// sigma0(X[i+1])
-	add	w27,w27,w16			// h+=Sigma1(e)
-	eor	w28,w28,w21			// Maj(a,b,c)
-	eor	w17,w3,w20,ror#22	// Sigma0(a)
-	eor	w1,w1,w10,lsr#10	// sigma1(X[i+14])
-	add	w12,w12,w5
-	add	w23,w23,w27			// d+=h
-	add	w27,w27,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	add	w12,w12,w2
-	add	w27,w27,w17			// h+=Sigma0(a)
-	add	w12,w12,w1
-	ldr	w1,[sp,#8]
-	str	w4,[sp,#4]
-	ror	w16,w23,#6
-	add	w26,w26,w28			// h+=K[i]
-	ror	w3,w14,#7
-	and	w17,w24,w23
-	ror	w2,w11,#17
-	bic	w28,w25,w23
-	ror	w4,w27,#2
-	add	w26,w26,w12			// h+=X[i]
-	eor	w16,w16,w23,ror#11
-	eor	w3,w3,w14,ror#18
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w27,w20			// a^b, b^c in next round
-	eor	w16,w16,w23,ror#25	// Sigma1(e)
-	eor	w4,w4,w27,ror#13
-	add	w26,w26,w17			// h+=Ch(e,f,g)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	eor	w2,w2,w11,ror#19
-	eor	w3,w3,w14,lsr#3	// sigma0(X[i+1])
-	add	w26,w26,w16			// h+=Sigma1(e)
-	eor	w19,w19,w20			// Maj(a,b,c)
-	eor	w17,w4,w27,ror#22	// Sigma0(a)
-	eor	w2,w2,w11,lsr#10	// sigma1(X[i+14])
-	add	w13,w13,w6
-	add	w22,w22,w26			// d+=h
-	add	w26,w26,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	add	w13,w13,w3
-	add	w26,w26,w17			// h+=Sigma0(a)
-	add	w13,w13,w2
-	ldr	w2,[sp,#12]
-	str	w5,[sp,#8]
-	ror	w16,w22,#6
-	add	w25,w25,w19			// h+=K[i]
-	ror	w4,w15,#7
-	and	w17,w23,w22
-	ror	w3,w12,#17
-	bic	w19,w24,w22
-	ror	w5,w26,#2
-	add	w25,w25,w13			// h+=X[i]
-	eor	w16,w16,w22,ror#11
-	eor	w4,w4,w15,ror#18
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w26,w27			// a^b, b^c in next round
-	eor	w16,w16,w22,ror#25	// Sigma1(e)
-	eor	w5,w5,w26,ror#13
-	add	w25,w25,w17			// h+=Ch(e,f,g)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	eor	w3,w3,w12,ror#19
-	eor	w4,w4,w15,lsr#3	// sigma0(X[i+1])
-	add	w25,w25,w16			// h+=Sigma1(e)
-	eor	w28,w28,w27			// Maj(a,b,c)
-	eor	w17,w5,w26,ror#22	// Sigma0(a)
-	eor	w3,w3,w12,lsr#10	// sigma1(X[i+14])
-	add	w14,w14,w7
-	add	w21,w21,w25			// d+=h
-	add	w25,w25,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	add	w14,w14,w4
-	add	w25,w25,w17			// h+=Sigma0(a)
-	add	w14,w14,w3
-	ldr	w3,[sp,#0]
-	str	w6,[sp,#12]
-	ror	w16,w21,#6
-	add	w24,w24,w28			// h+=K[i]
-	ror	w5,w0,#7
-	and	w17,w22,w21
-	ror	w4,w13,#17
-	bic	w28,w23,w21
-	ror	w6,w25,#2
-	add	w24,w24,w14			// h+=X[i]
-	eor	w16,w16,w21,ror#11
-	eor	w5,w5,w0,ror#18
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w25,w26			// a^b, b^c in next round
-	eor	w16,w16,w21,ror#25	// Sigma1(e)
-	eor	w6,w6,w25,ror#13
-	add	w24,w24,w17			// h+=Ch(e,f,g)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	eor	w4,w4,w13,ror#19
-	eor	w5,w5,w0,lsr#3	// sigma0(X[i+1])
-	add	w24,w24,w16			// h+=Sigma1(e)
-	eor	w19,w19,w26			// Maj(a,b,c)
-	eor	w17,w6,w25,ror#22	// Sigma0(a)
-	eor	w4,w4,w13,lsr#10	// sigma1(X[i+14])
-	add	w15,w15,w8
-	add	w20,w20,w24			// d+=h
-	add	w24,w24,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	add	w15,w15,w5
-	add	w24,w24,w17			// h+=Sigma0(a)
-	add	w15,w15,w4
-	ldr	w4,[sp,#4]
-	str	w7,[sp,#0]
-	ror	w16,w20,#6
-	add	w23,w23,w19			// h+=K[i]
-	ror	w6,w1,#7
-	and	w17,w21,w20
-	ror	w5,w14,#17
-	bic	w19,w22,w20
-	ror	w7,w24,#2
-	add	w23,w23,w15			// h+=X[i]
-	eor	w16,w16,w20,ror#11
-	eor	w6,w6,w1,ror#18
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w24,w25			// a^b, b^c in next round
-	eor	w16,w16,w20,ror#25	// Sigma1(e)
-	eor	w7,w7,w24,ror#13
-	add	w23,w23,w17			// h+=Ch(e,f,g)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	eor	w5,w5,w14,ror#19
-	eor	w6,w6,w1,lsr#3	// sigma0(X[i+1])
-	add	w23,w23,w16			// h+=Sigma1(e)
-	eor	w28,w28,w25			// Maj(a,b,c)
-	eor	w17,w7,w24,ror#22	// Sigma0(a)
-	eor	w5,w5,w14,lsr#10	// sigma1(X[i+14])
-	add	w0,w0,w9
-	add	w27,w27,w23			// d+=h
-	add	w23,w23,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	add	w0,w0,w6
-	add	w23,w23,w17			// h+=Sigma0(a)
-	add	w0,w0,w5
-	ldr	w5,[sp,#8]
-	str	w8,[sp,#4]
-	ror	w16,w27,#6
-	add	w22,w22,w28			// h+=K[i]
-	ror	w7,w2,#7
-	and	w17,w20,w27
-	ror	w6,w15,#17
-	bic	w28,w21,w27
-	ror	w8,w23,#2
-	add	w22,w22,w0			// h+=X[i]
-	eor	w16,w16,w27,ror#11
-	eor	w7,w7,w2,ror#18
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w23,w24			// a^b, b^c in next round
-	eor	w16,w16,w27,ror#25	// Sigma1(e)
-	eor	w8,w8,w23,ror#13
-	add	w22,w22,w17			// h+=Ch(e,f,g)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	eor	w6,w6,w15,ror#19
-	eor	w7,w7,w2,lsr#3	// sigma0(X[i+1])
-	add	w22,w22,w16			// h+=Sigma1(e)
-	eor	w19,w19,w24			// Maj(a,b,c)
-	eor	w17,w8,w23,ror#22	// Sigma0(a)
-	eor	w6,w6,w15,lsr#10	// sigma1(X[i+14])
-	add	w1,w1,w10
-	add	w26,w26,w22			// d+=h
-	add	w22,w22,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	add	w1,w1,w7
-	add	w22,w22,w17			// h+=Sigma0(a)
-	add	w1,w1,w6
-	ldr	w6,[sp,#12]
-	str	w9,[sp,#8]
-	ror	w16,w26,#6
-	add	w21,w21,w19			// h+=K[i]
-	ror	w8,w3,#7
-	and	w17,w27,w26
-	ror	w7,w0,#17
-	bic	w19,w20,w26
-	ror	w9,w22,#2
-	add	w21,w21,w1			// h+=X[i]
-	eor	w16,w16,w26,ror#11
-	eor	w8,w8,w3,ror#18
-	orr	w17,w17,w19			// Ch(e,f,g)
-	eor	w19,w22,w23			// a^b, b^c in next round
-	eor	w16,w16,w26,ror#25	// Sigma1(e)
-	eor	w9,w9,w22,ror#13
-	add	w21,w21,w17			// h+=Ch(e,f,g)
-	and	w28,w28,w19			// (b^c)&=(a^b)
-	eor	w7,w7,w0,ror#19
-	eor	w8,w8,w3,lsr#3	// sigma0(X[i+1])
-	add	w21,w21,w16			// h+=Sigma1(e)
-	eor	w28,w28,w23			// Maj(a,b,c)
-	eor	w17,w9,w22,ror#22	// Sigma0(a)
-	eor	w7,w7,w0,lsr#10	// sigma1(X[i+14])
-	add	w2,w2,w11
-	add	w25,w25,w21			// d+=h
-	add	w21,w21,w28			// h+=Maj(a,b,c)
-	ldr	w28,[x30],#4		// *K++, w19 in next round
-	add	w2,w2,w8
-	add	w21,w21,w17			// h+=Sigma0(a)
-	add	w2,w2,w7
-	ldr	w7,[sp,#0]
-	str	w10,[sp,#12]
-	ror	w16,w25,#6
-	add	w20,w20,w28			// h+=K[i]
-	ror	w9,w4,#7
-	and	w17,w26,w25
-	ror	w8,w1,#17
-	bic	w28,w27,w25
-	ror	w10,w21,#2
-	add	w20,w20,w2			// h+=X[i]
-	eor	w16,w16,w25,ror#11
-	eor	w9,w9,w4,ror#18
-	orr	w17,w17,w28			// Ch(e,f,g)
-	eor	w28,w21,w22			// a^b, b^c in next round
-	eor	w16,w16,w25,ror#25	// Sigma1(e)
-	eor	w10,w10,w21,ror#13
-	add	w20,w20,w17			// h+=Ch(e,f,g)
-	and	w19,w19,w28			// (b^c)&=(a^b)
-	eor	w8,w8,w1,ror#19
-	eor	w9,w9,w4,lsr#3	// sigma0(X[i+1])
-	add	w20,w20,w16			// h+=Sigma1(e)
-	eor	w19,w19,w22			// Maj(a,b,c)
-	eor	w17,w10,w21,ror#22	// Sigma0(a)
-	eor	w8,w8,w1,lsr#10	// sigma1(X[i+14])
-	add	w3,w3,w12
-	add	w24,w24,w20			// d+=h
-	add	w20,w20,w19			// h+=Maj(a,b,c)
-	ldr	w19,[x30],#4		// *K++, w28 in next round
-	add	w3,w3,w9
-	add	w20,w20,w17			// h+=Sigma0(a)
-	add	w3,w3,w8
-	cbnz	w19,.Loop_16_xx
+	ldr	x8,[sp,#8]
+	str	x11,[sp,#0]
+	ror	x16,x24,#14
+	add	x27,x27,x19			// h+=K[i]
+	ror	x10,x5,#1
+	and	x17,x25,x24
+	ror	x9,x2,#19
+	bic	x19,x26,x24
+	ror	x11,x20,#28
+	add	x27,x27,x3			// h+=X[i]
+	eor	x16,x16,x24,ror#18
+	eor	x10,x10,x5,ror#8
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x20,x21			// a^b, b^c in next round
+	eor	x16,x16,x24,ror#41	// Sigma1(e)
+	eor	x11,x11,x20,ror#34
+	add	x27,x27,x17			// h+=Ch(e,f,g)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	eor	x9,x9,x2,ror#61
+	eor	x10,x10,x5,lsr#7	// sigma0(X[i+1])
+	add	x27,x27,x16			// h+=Sigma1(e)
+	eor	x28,x28,x21			// Maj(a,b,c)
+	eor	x17,x11,x20,ror#39	// Sigma0(a)
+	eor	x9,x9,x2,lsr#6	// sigma1(X[i+14])
+	add	x4,x4,x13
+	add	x23,x23,x27			// d+=h
+	add	x27,x27,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	add	x4,x4,x10
+	add	x27,x27,x17			// h+=Sigma0(a)
+	add	x4,x4,x9
+	ldr	x9,[sp,#16]
+	str	x12,[sp,#8]
+	ror	x16,x23,#14
+	add	x26,x26,x28			// h+=K[i]
+	ror	x11,x6,#1
+	and	x17,x24,x23
+	ror	x10,x3,#19
+	bic	x28,x25,x23
+	ror	x12,x27,#28
+	add	x26,x26,x4			// h+=X[i]
+	eor	x16,x16,x23,ror#18
+	eor	x11,x11,x6,ror#8
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x27,x20			// a^b, b^c in next round
+	eor	x16,x16,x23,ror#41	// Sigma1(e)
+	eor	x12,x12,x27,ror#34
+	add	x26,x26,x17			// h+=Ch(e,f,g)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	eor	x10,x10,x3,ror#61
+	eor	x11,x11,x6,lsr#7	// sigma0(X[i+1])
+	add	x26,x26,x16			// h+=Sigma1(e)
+	eor	x19,x19,x20			// Maj(a,b,c)
+	eor	x17,x12,x27,ror#39	// Sigma0(a)
+	eor	x10,x10,x3,lsr#6	// sigma1(X[i+14])
+	add	x5,x5,x14
+	add	x22,x22,x26			// d+=h
+	add	x26,x26,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	add	x5,x5,x11
+	add	x26,x26,x17			// h+=Sigma0(a)
+	add	x5,x5,x10
+	ldr	x10,[sp,#24]
+	str	x13,[sp,#16]
+	ror	x16,x22,#14
+	add	x25,x25,x19			// h+=K[i]
+	ror	x12,x7,#1
+	and	x17,x23,x22
+	ror	x11,x4,#19
+	bic	x19,x24,x22
+	ror	x13,x26,#28
+	add	x25,x25,x5			// h+=X[i]
+	eor	x16,x16,x22,ror#18
+	eor	x12,x12,x7,ror#8
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x26,x27			// a^b, b^c in next round
+	eor	x16,x16,x22,ror#41	// Sigma1(e)
+	eor	x13,x13,x26,ror#34
+	add	x25,x25,x17			// h+=Ch(e,f,g)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	eor	x11,x11,x4,ror#61
+	eor	x12,x12,x7,lsr#7	// sigma0(X[i+1])
+	add	x25,x25,x16			// h+=Sigma1(e)
+	eor	x28,x28,x27			// Maj(a,b,c)
+	eor	x17,x13,x26,ror#39	// Sigma0(a)
+	eor	x11,x11,x4,lsr#6	// sigma1(X[i+14])
+	add	x6,x6,x15
+	add	x21,x21,x25			// d+=h
+	add	x25,x25,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	add	x6,x6,x12
+	add	x25,x25,x17			// h+=Sigma0(a)
+	add	x6,x6,x11
+	ldr	x11,[sp,#0]
+	str	x14,[sp,#24]
+	ror	x16,x21,#14
+	add	x24,x24,x28			// h+=K[i]
+	ror	x13,x8,#1
+	and	x17,x22,x21
+	ror	x12,x5,#19
+	bic	x28,x23,x21
+	ror	x14,x25,#28
+	add	x24,x24,x6			// h+=X[i]
+	eor	x16,x16,x21,ror#18
+	eor	x13,x13,x8,ror#8
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x25,x26			// a^b, b^c in next round
+	eor	x16,x16,x21,ror#41	// Sigma1(e)
+	eor	x14,x14,x25,ror#34
+	add	x24,x24,x17			// h+=Ch(e,f,g)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	eor	x12,x12,x5,ror#61
+	eor	x13,x13,x8,lsr#7	// sigma0(X[i+1])
+	add	x24,x24,x16			// h+=Sigma1(e)
+	eor	x19,x19,x26			// Maj(a,b,c)
+	eor	x17,x14,x25,ror#39	// Sigma0(a)
+	eor	x12,x12,x5,lsr#6	// sigma1(X[i+14])
+	add	x7,x7,x0
+	add	x20,x20,x24			// d+=h
+	add	x24,x24,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	add	x7,x7,x13
+	add	x24,x24,x17			// h+=Sigma0(a)
+	add	x7,x7,x12
+	ldr	x12,[sp,#8]
+	str	x15,[sp,#0]
+	ror	x16,x20,#14
+	add	x23,x23,x19			// h+=K[i]
+	ror	x14,x9,#1
+	and	x17,x21,x20
+	ror	x13,x6,#19
+	bic	x19,x22,x20
+	ror	x15,x24,#28
+	add	x23,x23,x7			// h+=X[i]
+	eor	x16,x16,x20,ror#18
+	eor	x14,x14,x9,ror#8
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x24,x25			// a^b, b^c in next round
+	eor	x16,x16,x20,ror#41	// Sigma1(e)
+	eor	x15,x15,x24,ror#34
+	add	x23,x23,x17			// h+=Ch(e,f,g)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	eor	x13,x13,x6,ror#61
+	eor	x14,x14,x9,lsr#7	// sigma0(X[i+1])
+	add	x23,x23,x16			// h+=Sigma1(e)
+	eor	x28,x28,x25			// Maj(a,b,c)
+	eor	x17,x15,x24,ror#39	// Sigma0(a)
+	eor	x13,x13,x6,lsr#6	// sigma1(X[i+14])
+	add	x8,x8,x1
+	add	x27,x27,x23			// d+=h
+	add	x23,x23,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	add	x8,x8,x14
+	add	x23,x23,x17			// h+=Sigma0(a)
+	add	x8,x8,x13
+	ldr	x13,[sp,#16]
+	str	x0,[sp,#8]
+	ror	x16,x27,#14
+	add	x22,x22,x28			// h+=K[i]
+	ror	x15,x10,#1
+	and	x17,x20,x27
+	ror	x14,x7,#19
+	bic	x28,x21,x27
+	ror	x0,x23,#28
+	add	x22,x22,x8			// h+=X[i]
+	eor	x16,x16,x27,ror#18
+	eor	x15,x15,x10,ror#8
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x23,x24			// a^b, b^c in next round
+	eor	x16,x16,x27,ror#41	// Sigma1(e)
+	eor	x0,x0,x23,ror#34
+	add	x22,x22,x17			// h+=Ch(e,f,g)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	eor	x14,x14,x7,ror#61
+	eor	x15,x15,x10,lsr#7	// sigma0(X[i+1])
+	add	x22,x22,x16			// h+=Sigma1(e)
+	eor	x19,x19,x24			// Maj(a,b,c)
+	eor	x17,x0,x23,ror#39	// Sigma0(a)
+	eor	x14,x14,x7,lsr#6	// sigma1(X[i+14])
+	add	x9,x9,x2
+	add	x26,x26,x22			// d+=h
+	add	x22,x22,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	add	x9,x9,x15
+	add	x22,x22,x17			// h+=Sigma0(a)
+	add	x9,x9,x14
+	ldr	x14,[sp,#24]
+	str	x1,[sp,#16]
+	ror	x16,x26,#14
+	add	x21,x21,x19			// h+=K[i]
+	ror	x0,x11,#1
+	and	x17,x27,x26
+	ror	x15,x8,#19
+	bic	x19,x20,x26
+	ror	x1,x22,#28
+	add	x21,x21,x9			// h+=X[i]
+	eor	x16,x16,x26,ror#18
+	eor	x0,x0,x11,ror#8
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x22,x23			// a^b, b^c in next round
+	eor	x16,x16,x26,ror#41	// Sigma1(e)
+	eor	x1,x1,x22,ror#34
+	add	x21,x21,x17			// h+=Ch(e,f,g)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	eor	x15,x15,x8,ror#61
+	eor	x0,x0,x11,lsr#7	// sigma0(X[i+1])
+	add	x21,x21,x16			// h+=Sigma1(e)
+	eor	x28,x28,x23			// Maj(a,b,c)
+	eor	x17,x1,x22,ror#39	// Sigma0(a)
+	eor	x15,x15,x8,lsr#6	// sigma1(X[i+14])
+	add	x10,x10,x3
+	add	x25,x25,x21			// d+=h
+	add	x21,x21,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	add	x10,x10,x0
+	add	x21,x21,x17			// h+=Sigma0(a)
+	add	x10,x10,x15
+	ldr	x15,[sp,#0]
+	str	x2,[sp,#24]
+	ror	x16,x25,#14
+	add	x20,x20,x28			// h+=K[i]
+	ror	x1,x12,#1
+	and	x17,x26,x25
+	ror	x0,x9,#19
+	bic	x28,x27,x25
+	ror	x2,x21,#28
+	add	x20,x20,x10			// h+=X[i]
+	eor	x16,x16,x25,ror#18
+	eor	x1,x1,x12,ror#8
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x21,x22			// a^b, b^c in next round
+	eor	x16,x16,x25,ror#41	// Sigma1(e)
+	eor	x2,x2,x21,ror#34
+	add	x20,x20,x17			// h+=Ch(e,f,g)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	eor	x0,x0,x9,ror#61
+	eor	x1,x1,x12,lsr#7	// sigma0(X[i+1])
+	add	x20,x20,x16			// h+=Sigma1(e)
+	eor	x19,x19,x22			// Maj(a,b,c)
+	eor	x17,x2,x21,ror#39	// Sigma0(a)
+	eor	x0,x0,x9,lsr#6	// sigma1(X[i+14])
+	add	x11,x11,x4
+	add	x24,x24,x20			// d+=h
+	add	x20,x20,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	add	x11,x11,x1
+	add	x20,x20,x17			// h+=Sigma0(a)
+	add	x11,x11,x0
+	ldr	x0,[sp,#8]
+	str	x3,[sp,#0]
+	ror	x16,x24,#14
+	add	x27,x27,x19			// h+=K[i]
+	ror	x2,x13,#1
+	and	x17,x25,x24
+	ror	x1,x10,#19
+	bic	x19,x26,x24
+	ror	x3,x20,#28
+	add	x27,x27,x11			// h+=X[i]
+	eor	x16,x16,x24,ror#18
+	eor	x2,x2,x13,ror#8
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x20,x21			// a^b, b^c in next round
+	eor	x16,x16,x24,ror#41	// Sigma1(e)
+	eor	x3,x3,x20,ror#34
+	add	x27,x27,x17			// h+=Ch(e,f,g)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	eor	x1,x1,x10,ror#61
+	eor	x2,x2,x13,lsr#7	// sigma0(X[i+1])
+	add	x27,x27,x16			// h+=Sigma1(e)
+	eor	x28,x28,x21			// Maj(a,b,c)
+	eor	x17,x3,x20,ror#39	// Sigma0(a)
+	eor	x1,x1,x10,lsr#6	// sigma1(X[i+14])
+	add	x12,x12,x5
+	add	x23,x23,x27			// d+=h
+	add	x27,x27,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	add	x12,x12,x2
+	add	x27,x27,x17			// h+=Sigma0(a)
+	add	x12,x12,x1
+	ldr	x1,[sp,#16]
+	str	x4,[sp,#8]
+	ror	x16,x23,#14
+	add	x26,x26,x28			// h+=K[i]
+	ror	x3,x14,#1
+	and	x17,x24,x23
+	ror	x2,x11,#19
+	bic	x28,x25,x23
+	ror	x4,x27,#28
+	add	x26,x26,x12			// h+=X[i]
+	eor	x16,x16,x23,ror#18
+	eor	x3,x3,x14,ror#8
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x27,x20			// a^b, b^c in next round
+	eor	x16,x16,x23,ror#41	// Sigma1(e)
+	eor	x4,x4,x27,ror#34
+	add	x26,x26,x17			// h+=Ch(e,f,g)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	eor	x2,x2,x11,ror#61
+	eor	x3,x3,x14,lsr#7	// sigma0(X[i+1])
+	add	x26,x26,x16			// h+=Sigma1(e)
+	eor	x19,x19,x20			// Maj(a,b,c)
+	eor	x17,x4,x27,ror#39	// Sigma0(a)
+	eor	x2,x2,x11,lsr#6	// sigma1(X[i+14])
+	add	x13,x13,x6
+	add	x22,x22,x26			// d+=h
+	add	x26,x26,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	add	x13,x13,x3
+	add	x26,x26,x17			// h+=Sigma0(a)
+	add	x13,x13,x2
+	ldr	x2,[sp,#24]
+	str	x5,[sp,#16]
+	ror	x16,x22,#14
+	add	x25,x25,x19			// h+=K[i]
+	ror	x4,x15,#1
+	and	x17,x23,x22
+	ror	x3,x12,#19
+	bic	x19,x24,x22
+	ror	x5,x26,#28
+	add	x25,x25,x13			// h+=X[i]
+	eor	x16,x16,x22,ror#18
+	eor	x4,x4,x15,ror#8
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x26,x27			// a^b, b^c in next round
+	eor	x16,x16,x22,ror#41	// Sigma1(e)
+	eor	x5,x5,x26,ror#34
+	add	x25,x25,x17			// h+=Ch(e,f,g)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	eor	x3,x3,x12,ror#61
+	eor	x4,x4,x15,lsr#7	// sigma0(X[i+1])
+	add	x25,x25,x16			// h+=Sigma1(e)
+	eor	x28,x28,x27			// Maj(a,b,c)
+	eor	x17,x5,x26,ror#39	// Sigma0(a)
+	eor	x3,x3,x12,lsr#6	// sigma1(X[i+14])
+	add	x14,x14,x7
+	add	x21,x21,x25			// d+=h
+	add	x25,x25,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	add	x14,x14,x4
+	add	x25,x25,x17			// h+=Sigma0(a)
+	add	x14,x14,x3
+	ldr	x3,[sp,#0]
+	str	x6,[sp,#24]
+	ror	x16,x21,#14
+	add	x24,x24,x28			// h+=K[i]
+	ror	x5,x0,#1
+	and	x17,x22,x21
+	ror	x4,x13,#19
+	bic	x28,x23,x21
+	ror	x6,x25,#28
+	add	x24,x24,x14			// h+=X[i]
+	eor	x16,x16,x21,ror#18
+	eor	x5,x5,x0,ror#8
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x25,x26			// a^b, b^c in next round
+	eor	x16,x16,x21,ror#41	// Sigma1(e)
+	eor	x6,x6,x25,ror#34
+	add	x24,x24,x17			// h+=Ch(e,f,g)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	eor	x4,x4,x13,ror#61
+	eor	x5,x5,x0,lsr#7	// sigma0(X[i+1])
+	add	x24,x24,x16			// h+=Sigma1(e)
+	eor	x19,x19,x26			// Maj(a,b,c)
+	eor	x17,x6,x25,ror#39	// Sigma0(a)
+	eor	x4,x4,x13,lsr#6	// sigma1(X[i+14])
+	add	x15,x15,x8
+	add	x20,x20,x24			// d+=h
+	add	x24,x24,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	add	x15,x15,x5
+	add	x24,x24,x17			// h+=Sigma0(a)
+	add	x15,x15,x4
+	ldr	x4,[sp,#8]
+	str	x7,[sp,#0]
+	ror	x16,x20,#14
+	add	x23,x23,x19			// h+=K[i]
+	ror	x6,x1,#1
+	and	x17,x21,x20
+	ror	x5,x14,#19
+	bic	x19,x22,x20
+	ror	x7,x24,#28
+	add	x23,x23,x15			// h+=X[i]
+	eor	x16,x16,x20,ror#18
+	eor	x6,x6,x1,ror#8
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x24,x25			// a^b, b^c in next round
+	eor	x16,x16,x20,ror#41	// Sigma1(e)
+	eor	x7,x7,x24,ror#34
+	add	x23,x23,x17			// h+=Ch(e,f,g)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	eor	x5,x5,x14,ror#61
+	eor	x6,x6,x1,lsr#7	// sigma0(X[i+1])
+	add	x23,x23,x16			// h+=Sigma1(e)
+	eor	x28,x28,x25			// Maj(a,b,c)
+	eor	x17,x7,x24,ror#39	// Sigma0(a)
+	eor	x5,x5,x14,lsr#6	// sigma1(X[i+14])
+	add	x0,x0,x9
+	add	x27,x27,x23			// d+=h
+	add	x23,x23,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	add	x0,x0,x6
+	add	x23,x23,x17			// h+=Sigma0(a)
+	add	x0,x0,x5
+	ldr	x5,[sp,#16]
+	str	x8,[sp,#8]
+	ror	x16,x27,#14
+	add	x22,x22,x28			// h+=K[i]
+	ror	x7,x2,#1
+	and	x17,x20,x27
+	ror	x6,x15,#19
+	bic	x28,x21,x27
+	ror	x8,x23,#28
+	add	x22,x22,x0			// h+=X[i]
+	eor	x16,x16,x27,ror#18
+	eor	x7,x7,x2,ror#8
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x23,x24			// a^b, b^c in next round
+	eor	x16,x16,x27,ror#41	// Sigma1(e)
+	eor	x8,x8,x23,ror#34
+	add	x22,x22,x17			// h+=Ch(e,f,g)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	eor	x6,x6,x15,ror#61
+	eor	x7,x7,x2,lsr#7	// sigma0(X[i+1])
+	add	x22,x22,x16			// h+=Sigma1(e)
+	eor	x19,x19,x24			// Maj(a,b,c)
+	eor	x17,x8,x23,ror#39	// Sigma0(a)
+	eor	x6,x6,x15,lsr#6	// sigma1(X[i+14])
+	add	x1,x1,x10
+	add	x26,x26,x22			// d+=h
+	add	x22,x22,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	add	x1,x1,x7
+	add	x22,x22,x17			// h+=Sigma0(a)
+	add	x1,x1,x6
+	ldr	x6,[sp,#24]
+	str	x9,[sp,#16]
+	ror	x16,x26,#14
+	add	x21,x21,x19			// h+=K[i]
+	ror	x8,x3,#1
+	and	x17,x27,x26
+	ror	x7,x0,#19
+	bic	x19,x20,x26
+	ror	x9,x22,#28
+	add	x21,x21,x1			// h+=X[i]
+	eor	x16,x16,x26,ror#18
+	eor	x8,x8,x3,ror#8
+	orr	x17,x17,x19			// Ch(e,f,g)
+	eor	x19,x22,x23			// a^b, b^c in next round
+	eor	x16,x16,x26,ror#41	// Sigma1(e)
+	eor	x9,x9,x22,ror#34
+	add	x21,x21,x17			// h+=Ch(e,f,g)
+	and	x28,x28,x19			// (b^c)&=(a^b)
+	eor	x7,x7,x0,ror#61
+	eor	x8,x8,x3,lsr#7	// sigma0(X[i+1])
+	add	x21,x21,x16			// h+=Sigma1(e)
+	eor	x28,x28,x23			// Maj(a,b,c)
+	eor	x17,x9,x22,ror#39	// Sigma0(a)
+	eor	x7,x7,x0,lsr#6	// sigma1(X[i+14])
+	add	x2,x2,x11
+	add	x25,x25,x21			// d+=h
+	add	x21,x21,x28			// h+=Maj(a,b,c)
+	ldr	x28,[x30],#8		// *K++, x19 in next round
+	add	x2,x2,x8
+	add	x21,x21,x17			// h+=Sigma0(a)
+	add	x2,x2,x7
+	ldr	x7,[sp,#0]
+	str	x10,[sp,#24]
+	ror	x16,x25,#14
+	add	x20,x20,x28			// h+=K[i]
+	ror	x9,x4,#1
+	and	x17,x26,x25
+	ror	x8,x1,#19
+	bic	x28,x27,x25
+	ror	x10,x21,#28
+	add	x20,x20,x2			// h+=X[i]
+	eor	x16,x16,x25,ror#18
+	eor	x9,x9,x4,ror#8
+	orr	x17,x17,x28			// Ch(e,f,g)
+	eor	x28,x21,x22			// a^b, b^c in next round
+	eor	x16,x16,x25,ror#41	// Sigma1(e)
+	eor	x10,x10,x21,ror#34
+	add	x20,x20,x17			// h+=Ch(e,f,g)
+	and	x19,x19,x28			// (b^c)&=(a^b)
+	eor	x8,x8,x1,ror#61
+	eor	x9,x9,x4,lsr#7	// sigma0(X[i+1])
+	add	x20,x20,x16			// h+=Sigma1(e)
+	eor	x19,x19,x22			// Maj(a,b,c)
+	eor	x17,x10,x21,ror#39	// Sigma0(a)
+	eor	x8,x8,x1,lsr#6	// sigma1(X[i+14])
+	add	x3,x3,x12
+	add	x24,x24,x20			// d+=h
+	add	x20,x20,x19			// h+=Maj(a,b,c)
+	ldr	x19,[x30],#8		// *K++, x28 in next round
+	add	x3,x3,x9
+	add	x20,x20,x17			// h+=Sigma0(a)
+	add	x3,x3,x8
+	cbnz	x19,.Loop_16_xx
 
 	ldp	x0,x2,[x29,#96]
 	ldr	x1,[x29,#112]
-	sub	x30,x30,#260		// rewind
+	sub	x30,x30,#648		// rewind
 
-	ldp	w3,w4,[x0]
-	ldp	w5,w6,[x0,#2*4]
-	add	x1,x1,#14*4			// advance input pointer
-	ldp	w7,w8,[x0,#4*4]
-	add	w20,w20,w3
-	ldp	w9,w10,[x0,#6*4]
-	add	w21,w21,w4
-	add	w22,w22,w5
-	add	w23,w23,w6
-	stp	w20,w21,[x0]
-	add	w24,w24,w7
-	add	w25,w25,w8
-	stp	w22,w23,[x0,#2*4]
-	add	w26,w26,w9
-	add	w27,w27,w10
+	ldp	x3,x4,[x0]
+	ldp	x5,x6,[x0,#2*8]
+	add	x1,x1,#14*8			// advance input pointer
+	ldp	x7,x8,[x0,#4*8]
+	add	x20,x20,x3
+	ldp	x9,x10,[x0,#6*8]
+	add	x21,x21,x4
+	add	x22,x22,x5
+	add	x23,x23,x6
+	stp	x20,x21,[x0]
+	add	x24,x24,x7
+	add	x25,x25,x8
+	stp	x22,x23,[x0,#2*8]
+	add	x26,x26,x9
+	add	x27,x27,x10
 	cmp	x1,x2
-	stp	w24,w25,[x0,#4*4]
-	stp	w26,w27,[x0,#6*4]
+	stp	x24,x25,[x0,#4*8]
+	stp	x26,x27,[x0,#6*8]
 	b.ne	.Loop
 
 	ldp	x19,x20,[x29,#16]
-	add	sp,sp,#4*4
+	add	sp,sp,#4*8
 	ldp	x21,x22,[x29,#32]
 	ldp	x23,x24,[x29,#48]
 	ldp	x25,x26,[x29,#64]
@@ -1039,1024 +1037,578 @@ sha256_block_data_order:
 	ldp	x29,x30,[sp],#128
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
-.size	sha256_block_data_order,.-sha256_block_data_order
+.size	sha512_block_data_order,.-sha512_block_data_order
 
 .section	.rodata
 
 .align	6
-.type	.LK256,%object
-.LK256:
-.long	0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5
-.long	0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5
-.long	0xd807aa98,0x12835b01,0x243185be,0x550c7dc3
-.long	0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174
-.long	0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc
-.long	0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da
-.long	0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7
-.long	0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967
-.long	0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13
-.long	0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85
-.long	0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3
-.long	0xd192e819,0xd6990624,0xf40e3585,0x106aa070
-.long	0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5
-.long	0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3
-.long	0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208
-.long	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
-.long	0	//terminator
-.size	.LK256,.-.LK256
-.byte	83,72,65,50,53,54,32,98,108,111,99,107,32,116,114,97,110,115,102,111,114,109,32,102,111,114,32,65,82,77,118,56,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
+.type	.LK512,%object
+.LK512:
+.quad	0x428a2f98d728ae22,0x7137449123ef65cd
+.quad	0xb5c0fbcfec4d3b2f,0xe9b5dba58189dbbc
+.quad	0x3956c25bf348b538,0x59f111f1b605d019
+.quad	0x923f82a4af194f9b,0xab1c5ed5da6d8118
+.quad	0xd807aa98a3030242,0x12835b0145706fbe
+.quad	0x243185be4ee4b28c,0x550c7dc3d5ffb4e2
+.quad	0x72be5d74f27b896f,0x80deb1fe3b1696b1
+.quad	0x9bdc06a725c71235,0xc19bf174cf692694
+.quad	0xe49b69c19ef14ad2,0xefbe4786384f25e3
+.quad	0x0fc19dc68b8cd5b5,0x240ca1cc77ac9c65
+.quad	0x2de92c6f592b0275,0x4a7484aa6ea6e483
+.quad	0x5cb0a9dcbd41fbd4,0x76f988da831153b5
+.quad	0x983e5152ee66dfab,0xa831c66d2db43210
+.quad	0xb00327c898fb213f,0xbf597fc7beef0ee4
+.quad	0xc6e00bf33da88fc2,0xd5a79147930aa725
+.quad	0x06ca6351e003826f,0x142929670a0e6e70
+.quad	0x27b70a8546d22ffc,0x2e1b21385c26c926
+.quad	0x4d2c6dfc5ac42aed,0x53380d139d95b3df
+.quad	0x650a73548baf63de,0x766a0abb3c77b2a8
+.quad	0x81c2c92e47edaee6,0x92722c851482353b
+.quad	0xa2bfe8a14cf10364,0xa81a664bbc423001
+.quad	0xc24b8b70d0f89791,0xc76c51a30654be30
+.quad	0xd192e819d6ef5218,0xd69906245565a910
+.quad	0xf40e35855771202a,0x106aa07032bbd1b8
+.quad	0x19a4c116b8d2d0c8,0x1e376c085141ab53
+.quad	0x2748774cdf8eeb99,0x34b0bcb5e19b48a8
+.quad	0x391c0cb3c5c95a63,0x4ed8aa4ae3418acb
+.quad	0x5b9cca4f7763e373,0x682e6ff3d6b2b8a3
+.quad	0x748f82ee5defb2fc,0x78a5636f43172f60
+.quad	0x84c87814a1f0ab72,0x8cc702081a6439ec
+.quad	0x90befffa23631e28,0xa4506cebde82bde9
+.quad	0xbef9a3f7b2c67915,0xc67178f2e372532b
+.quad	0xca273eceea26619c,0xd186b8c721c0c207
+.quad	0xeada7dd6cde0eb1e,0xf57d4f7fee6ed178
+.quad	0x06f067aa72176fba,0x0a637dc5a2c898a6
+.quad	0x113f9804bef90dae,0x1b710b35131c471b
+.quad	0x28db77f523047d84,0x32caab7b40c72493
+.quad	0x3c9ebe0a15c9bebc,0x431d67c49c100d4c
+.quad	0x4cc5d4becb3e42b6,0x597f299cfc657e2a
+.quad	0x5fcb6fab3ad6faec,0x6c44198c4a475817
+.quad	0	// terminator
+.size	.LK512,.-.LK512
+.byte	83,72,65,53,49,50,32,98,108,111,99,107,32,116,114,97,110,115,102,111,114,109,32,102,111,114,32,65,82,77,118,56,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
 .align	2
 .align	2
 
 .text
 #ifndef	__KERNEL__
-.type	sha256_block_armv8,%function
+.type	sha512_block_armv8,%function
 .align	6
-sha256_block_armv8:
+sha512_block_armv8:
 .Lv8_entry:
-	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later.
+	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later
 	stp	x29,x30,[sp,#-16]!
 	add	x29,sp,#0
 
-	ld1	{v0.4s,v1.4s},[x0]
-	adrp	x3,.LK256
-	add	x3,x3,#:lo12:.LK256
+	ld1	{v16.16b,v17.16b,v18.16b,v19.16b},[x1],#64	// load input
+	ld1	{v20.16b,v21.16b,v22.16b,v23.16b},[x1],#64
 
+	ld1	{v0.2d,v1.2d,v2.2d,v3.2d},[x0]		// load context
+	adrp	x3,.LK512
+	add	x3,x3,#:lo12:.LK512
+
+	rev64	v16.16b,v16.16b
+	rev64	v17.16b,v17.16b
+	rev64	v18.16b,v18.16b
+	rev64	v19.16b,v19.16b
+	rev64	v20.16b,v20.16b
+	rev64	v21.16b,v21.16b
+	rev64	v22.16b,v22.16b
+	rev64	v23.16b,v23.16b
+	b	.Loop_hw
+
+.align	4
 .Loop_hw:
-	ld1	{v4.16b,v5.16b,v6.16b,v7.16b},[x1],#64
-	sub	x2,x2,#1
-	ld1	{v16.4s},[x3],#16
-	rev32	v4.16b,v4.16b
-	rev32	v5.16b,v5.16b
-	rev32	v6.16b,v6.16b
-	rev32	v7.16b,v7.16b
-	orr	v18.16b,v0.16b,v0.16b		// offload
-	orr	v19.16b,v1.16b,v1.16b
-	ld1	{v17.4s},[x3],#16
-	add	v16.4s,v16.4s,v4.4s
-.inst	0x5e2828a4	//sha256su0 v4.16b,v5.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e104020	//sha256h v0.16b,v1.16b,v16.4s
-.inst	0x5e105041	//sha256h2 v1.16b,v2.16b,v16.4s
-.inst	0x5e0760c4	//sha256su1 v4.16b,v6.16b,v7.16b
-	ld1	{v16.4s},[x3],#16
-	add	v17.4s,v17.4s,v5.4s
-.inst	0x5e2828c5	//sha256su0 v5.16b,v6.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e114020	//sha256h v0.16b,v1.16b,v17.4s
-.inst	0x5e115041	//sha256h2 v1.16b,v2.16b,v17.4s
-.inst	0x5e0460e5	//sha256su1 v5.16b,v7.16b,v4.16b
-	ld1	{v17.4s},[x3],#16
-	add	v16.4s,v16.4s,v6.4s
-.inst	0x5e2828e6	//sha256su0 v6.16b,v7.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e104020	//sha256h v0.16b,v1.16b,v16.4s
-.inst	0x5e105041	//sha256h2 v1.16b,v2.16b,v16.4s
-.inst	0x5e056086	//sha256su1 v6.16b,v4.16b,v5.16b
-	ld1	{v16.4s},[x3],#16
-	add	v17.4s,v17.4s,v7.4s
-.inst	0x5e282887	//sha256su0 v7.16b,v4.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e114020	//sha256h v0.16b,v1.16b,v17.4s
-.inst	0x5e115041	//sha256h2 v1.16b,v2.16b,v17.4s
-.inst	0x5e0660a7	//sha256su1 v7.16b,v5.16b,v6.16b
-	ld1	{v17.4s},[x3],#16
-	add	v16.4s,v16.4s,v4.4s
-.inst	0x5e2828a4	//sha256su0 v4.16b,v5.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e104020	//sha256h v0.16b,v1.16b,v16.4s
-.inst	0x5e105041	//sha256h2 v1.16b,v2.16b,v16.4s
-.inst	0x5e0760c4	//sha256su1 v4.16b,v6.16b,v7.16b
-	ld1	{v16.4s},[x3],#16
-	add	v17.4s,v17.4s,v5.4s
-.inst	0x5e2828c5	//sha256su0 v5.16b,v6.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e114020	//sha256h v0.16b,v1.16b,v17.4s
-.inst	0x5e115041	//sha256h2 v1.16b,v2.16b,v17.4s
-.inst	0x5e0460e5	//sha256su1 v5.16b,v7.16b,v4.16b
-	ld1	{v17.4s},[x3],#16
-	add	v16.4s,v16.4s,v6.4s
-.inst	0x5e2828e6	//sha256su0 v6.16b,v7.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e104020	//sha256h v0.16b,v1.16b,v16.4s
-.inst	0x5e105041	//sha256h2 v1.16b,v2.16b,v16.4s
-.inst	0x5e056086	//sha256su1 v6.16b,v4.16b,v5.16b
-	ld1	{v16.4s},[x3],#16
-	add	v17.4s,v17.4s,v7.4s
-.inst	0x5e282887	//sha256su0 v7.16b,v4.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e114020	//sha256h v0.16b,v1.16b,v17.4s
-.inst	0x5e115041	//sha256h2 v1.16b,v2.16b,v17.4s
-.inst	0x5e0660a7	//sha256su1 v7.16b,v5.16b,v6.16b
-	ld1	{v17.4s},[x3],#16
-	add	v16.4s,v16.4s,v4.4s
-.inst	0x5e2828a4	//sha256su0 v4.16b,v5.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e104020	//sha256h v0.16b,v1.16b,v16.4s
-.inst	0x5e105041	//sha256h2 v1.16b,v2.16b,v16.4s
-.inst	0x5e0760c4	//sha256su1 v4.16b,v6.16b,v7.16b
-	ld1	{v16.4s},[x3],#16
-	add	v17.4s,v17.4s,v5.4s
-.inst	0x5e2828c5	//sha256su0 v5.16b,v6.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e114020	//sha256h v0.16b,v1.16b,v17.4s
-.inst	0x5e115041	//sha256h2 v1.16b,v2.16b,v17.4s
-.inst	0x5e0460e5	//sha256su1 v5.16b,v7.16b,v4.16b
-	ld1	{v17.4s},[x3],#16
-	add	v16.4s,v16.4s,v6.4s
-.inst	0x5e2828e6	//sha256su0 v6.16b,v7.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e104020	//sha256h v0.16b,v1.16b,v16.4s
-.inst	0x5e105041	//sha256h2 v1.16b,v2.16b,v16.4s
-.inst	0x5e056086	//sha256su1 v6.16b,v4.16b,v5.16b
-	ld1	{v16.4s},[x3],#16
-	add	v17.4s,v17.4s,v7.4s
-.inst	0x5e282887	//sha256su0 v7.16b,v4.16b
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e114020	//sha256h v0.16b,v1.16b,v17.4s
-.inst	0x5e115041	//sha256h2 v1.16b,v2.16b,v17.4s
-.inst	0x5e0660a7	//sha256su1 v7.16b,v5.16b,v6.16b
-	ld1	{v17.4s},[x3],#16
-	add	v16.4s,v16.4s,v4.4s
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e104020	//sha256h v0.16b,v1.16b,v16.4s
-.inst	0x5e105041	//sha256h2 v1.16b,v2.16b,v16.4s
-
-	ld1	{v16.4s},[x3],#16
-	add	v17.4s,v17.4s,v5.4s
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e114020	//sha256h v0.16b,v1.16b,v17.4s
-.inst	0x5e115041	//sha256h2 v1.16b,v2.16b,v17.4s
-
-	ld1	{v17.4s},[x3]
-	add	v16.4s,v16.4s,v6.4s
-	sub	x3,x3,#64*4-16	// rewind
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e104020	//sha256h v0.16b,v1.16b,v16.4s
-.inst	0x5e105041	//sha256h2 v1.16b,v2.16b,v16.4s
-
-	add	v17.4s,v17.4s,v7.4s
-	orr	v2.16b,v0.16b,v0.16b
-.inst	0x5e114020	//sha256h v0.16b,v1.16b,v17.4s
-.inst	0x5e115041	//sha256h2 v1.16b,v2.16b,v17.4s
-
-	add	v0.4s,v0.4s,v18.4s
-	add	v1.4s,v1.4s,v19.4s
+	ld1	{v24.2d},[x3],#16
+	subs	x2,x2,#1
+	sub	x4,x1,#128
+	orr	v26.16b,v0.16b,v0.16b			// offload
+	orr	v27.16b,v1.16b,v1.16b
+	orr	v28.16b,v2.16b,v2.16b
+	orr	v29.16b,v3.16b,v3.16b
+	csel	x1,x1,x4,ne			// conditional rewind
+	add	v24.2d,v24.2d,v16.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v2.16b,v3.16b,#8
+	ext	v6.16b,v1.16b,v2.16b,#8
+	add	v3.2d,v3.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec08230	//sha512su0 v16.16b,v17.16b
+	ext	v7.16b,v20.16b,v21.16b,#8
+.inst	0xce6680a3	//sha512h v3.16b,v5.16b,v6.16b
+.inst	0xce678af0	//sha512su1 v16.16b,v23.16b,v7.16b
+	add	v4.2d,v1.2d,v3.2d		// "D + T1"
+.inst	0xce608423	//sha512h2 v3.16b,v1.16b,v0.16b
+	add	v25.2d,v25.2d,v17.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v4.16b,v2.16b,#8
+	ext	v6.16b,v0.16b,v4.16b,#8
+	add	v2.2d,v2.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08251	//sha512su0 v17.16b,v18.16b
+	ext	v7.16b,v21.16b,v22.16b,#8
+.inst	0xce6680a2	//sha512h v2.16b,v5.16b,v6.16b
+.inst	0xce678a11	//sha512su1 v17.16b,v16.16b,v7.16b
+	add	v1.2d,v0.2d,v2.2d		// "D + T1"
+.inst	0xce638402	//sha512h2 v2.16b,v0.16b,v3.16b
+	add	v24.2d,v24.2d,v18.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v1.16b,v4.16b,#8
+	ext	v6.16b,v3.16b,v1.16b,#8
+	add	v4.2d,v4.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec08272	//sha512su0 v18.16b,v19.16b
+	ext	v7.16b,v22.16b,v23.16b,#8
+.inst	0xce6680a4	//sha512h v4.16b,v5.16b,v6.16b
+.inst	0xce678a32	//sha512su1 v18.16b,v17.16b,v7.16b
+	add	v0.2d,v3.2d,v4.2d		// "D + T1"
+.inst	0xce628464	//sha512h2 v4.16b,v3.16b,v2.16b
+	add	v25.2d,v25.2d,v19.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v0.16b,v1.16b,#8
+	ext	v6.16b,v2.16b,v0.16b,#8
+	add	v1.2d,v1.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08293	//sha512su0 v19.16b,v20.16b
+	ext	v7.16b,v23.16b,v16.16b,#8
+.inst	0xce6680a1	//sha512h v1.16b,v5.16b,v6.16b
+.inst	0xce678a53	//sha512su1 v19.16b,v18.16b,v7.16b
+	add	v3.2d,v2.2d,v1.2d		// "D + T1"
+.inst	0xce648441	//sha512h2 v1.16b,v2.16b,v4.16b
+	add	v24.2d,v24.2d,v20.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v3.16b,v0.16b,#8
+	ext	v6.16b,v4.16b,v3.16b,#8
+	add	v0.2d,v0.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec082b4	//sha512su0 v20.16b,v21.16b
+	ext	v7.16b,v16.16b,v17.16b,#8
+.inst	0xce6680a0	//sha512h v0.16b,v5.16b,v6.16b
+.inst	0xce678a74	//sha512su1 v20.16b,v19.16b,v7.16b
+	add	v2.2d,v4.2d,v0.2d		// "D + T1"
+.inst	0xce618480	//sha512h2 v0.16b,v4.16b,v1.16b
+	add	v25.2d,v25.2d,v21.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v2.16b,v3.16b,#8
+	ext	v6.16b,v1.16b,v2.16b,#8
+	add	v3.2d,v3.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec082d5	//sha512su0 v21.16b,v22.16b
+	ext	v7.16b,v17.16b,v18.16b,#8
+.inst	0xce6680a3	//sha512h v3.16b,v5.16b,v6.16b
+.inst	0xce678a95	//sha512su1 v21.16b,v20.16b,v7.16b
+	add	v4.2d,v1.2d,v3.2d		// "D + T1"
+.inst	0xce608423	//sha512h2 v3.16b,v1.16b,v0.16b
+	add	v24.2d,v24.2d,v22.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v4.16b,v2.16b,#8
+	ext	v6.16b,v0.16b,v4.16b,#8
+	add	v2.2d,v2.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec082f6	//sha512su0 v22.16b,v23.16b
+	ext	v7.16b,v18.16b,v19.16b,#8
+.inst	0xce6680a2	//sha512h v2.16b,v5.16b,v6.16b
+.inst	0xce678ab6	//sha512su1 v22.16b,v21.16b,v7.16b
+	add	v1.2d,v0.2d,v2.2d		// "D + T1"
+.inst	0xce638402	//sha512h2 v2.16b,v0.16b,v3.16b
+	add	v25.2d,v25.2d,v23.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v1.16b,v4.16b,#8
+	ext	v6.16b,v3.16b,v1.16b,#8
+	add	v4.2d,v4.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08217	//sha512su0 v23.16b,v16.16b
+	ext	v7.16b,v19.16b,v20.16b,#8
+.inst	0xce6680a4	//sha512h v4.16b,v5.16b,v6.16b
+.inst	0xce678ad7	//sha512su1 v23.16b,v22.16b,v7.16b
+	add	v0.2d,v3.2d,v4.2d		// "D + T1"
+.inst	0xce628464	//sha512h2 v4.16b,v3.16b,v2.16b
+	add	v24.2d,v24.2d,v16.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v0.16b,v1.16b,#8
+	ext	v6.16b,v2.16b,v0.16b,#8
+	add	v1.2d,v1.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec08230	//sha512su0 v16.16b,v17.16b
+	ext	v7.16b,v20.16b,v21.16b,#8
+.inst	0xce6680a1	//sha512h v1.16b,v5.16b,v6.16b
+.inst	0xce678af0	//sha512su1 v16.16b,v23.16b,v7.16b
+	add	v3.2d,v2.2d,v1.2d		// "D + T1"
+.inst	0xce648441	//sha512h2 v1.16b,v2.16b,v4.16b
+	add	v25.2d,v25.2d,v17.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v3.16b,v0.16b,#8
+	ext	v6.16b,v4.16b,v3.16b,#8
+	add	v0.2d,v0.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08251	//sha512su0 v17.16b,v18.16b
+	ext	v7.16b,v21.16b,v22.16b,#8
+.inst	0xce6680a0	//sha512h v0.16b,v5.16b,v6.16b
+.inst	0xce678a11	//sha512su1 v17.16b,v16.16b,v7.16b
+	add	v2.2d,v4.2d,v0.2d		// "D + T1"
+.inst	0xce618480	//sha512h2 v0.16b,v4.16b,v1.16b
+	add	v24.2d,v24.2d,v18.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v2.16b,v3.16b,#8
+	ext	v6.16b,v1.16b,v2.16b,#8
+	add	v3.2d,v3.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec08272	//sha512su0 v18.16b,v19.16b
+	ext	v7.16b,v22.16b,v23.16b,#8
+.inst	0xce6680a3	//sha512h v3.16b,v5.16b,v6.16b
+.inst	0xce678a32	//sha512su1 v18.16b,v17.16b,v7.16b
+	add	v4.2d,v1.2d,v3.2d		// "D + T1"
+.inst	0xce608423	//sha512h2 v3.16b,v1.16b,v0.16b
+	add	v25.2d,v25.2d,v19.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v4.16b,v2.16b,#8
+	ext	v6.16b,v0.16b,v4.16b,#8
+	add	v2.2d,v2.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08293	//sha512su0 v19.16b,v20.16b
+	ext	v7.16b,v23.16b,v16.16b,#8
+.inst	0xce6680a2	//sha512h v2.16b,v5.16b,v6.16b
+.inst	0xce678a53	//sha512su1 v19.16b,v18.16b,v7.16b
+	add	v1.2d,v0.2d,v2.2d		// "D + T1"
+.inst	0xce638402	//sha512h2 v2.16b,v0.16b,v3.16b
+	add	v24.2d,v24.2d,v20.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v1.16b,v4.16b,#8
+	ext	v6.16b,v3.16b,v1.16b,#8
+	add	v4.2d,v4.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec082b4	//sha512su0 v20.16b,v21.16b
+	ext	v7.16b,v16.16b,v17.16b,#8
+.inst	0xce6680a4	//sha512h v4.16b,v5.16b,v6.16b
+.inst	0xce678a74	//sha512su1 v20.16b,v19.16b,v7.16b
+	add	v0.2d,v3.2d,v4.2d		// "D + T1"
+.inst	0xce628464	//sha512h2 v4.16b,v3.16b,v2.16b
+	add	v25.2d,v25.2d,v21.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v0.16b,v1.16b,#8
+	ext	v6.16b,v2.16b,v0.16b,#8
+	add	v1.2d,v1.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec082d5	//sha512su0 v21.16b,v22.16b
+	ext	v7.16b,v17.16b,v18.16b,#8
+.inst	0xce6680a1	//sha512h v1.16b,v5.16b,v6.16b
+.inst	0xce678a95	//sha512su1 v21.16b,v20.16b,v7.16b
+	add	v3.2d,v2.2d,v1.2d		// "D + T1"
+.inst	0xce648441	//sha512h2 v1.16b,v2.16b,v4.16b
+	add	v24.2d,v24.2d,v22.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v3.16b,v0.16b,#8
+	ext	v6.16b,v4.16b,v3.16b,#8
+	add	v0.2d,v0.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec082f6	//sha512su0 v22.16b,v23.16b
+	ext	v7.16b,v18.16b,v19.16b,#8
+.inst	0xce6680a0	//sha512h v0.16b,v5.16b,v6.16b
+.inst	0xce678ab6	//sha512su1 v22.16b,v21.16b,v7.16b
+	add	v2.2d,v4.2d,v0.2d		// "D + T1"
+.inst	0xce618480	//sha512h2 v0.16b,v4.16b,v1.16b
+	add	v25.2d,v25.2d,v23.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v2.16b,v3.16b,#8
+	ext	v6.16b,v1.16b,v2.16b,#8
+	add	v3.2d,v3.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08217	//sha512su0 v23.16b,v16.16b
+	ext	v7.16b,v19.16b,v20.16b,#8
+.inst	0xce6680a3	//sha512h v3.16b,v5.16b,v6.16b
+.inst	0xce678ad7	//sha512su1 v23.16b,v22.16b,v7.16b
+	add	v4.2d,v1.2d,v3.2d		// "D + T1"
+.inst	0xce608423	//sha512h2 v3.16b,v1.16b,v0.16b
+	add	v24.2d,v24.2d,v16.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v4.16b,v2.16b,#8
+	ext	v6.16b,v0.16b,v4.16b,#8
+	add	v2.2d,v2.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec08230	//sha512su0 v16.16b,v17.16b
+	ext	v7.16b,v20.16b,v21.16b,#8
+.inst	0xce6680a2	//sha512h v2.16b,v5.16b,v6.16b
+.inst	0xce678af0	//sha512su1 v16.16b,v23.16b,v7.16b
+	add	v1.2d,v0.2d,v2.2d		// "D + T1"
+.inst	0xce638402	//sha512h2 v2.16b,v0.16b,v3.16b
+	add	v25.2d,v25.2d,v17.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v1.16b,v4.16b,#8
+	ext	v6.16b,v3.16b,v1.16b,#8
+	add	v4.2d,v4.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08251	//sha512su0 v17.16b,v18.16b
+	ext	v7.16b,v21.16b,v22.16b,#8
+.inst	0xce6680a4	//sha512h v4.16b,v5.16b,v6.16b
+.inst	0xce678a11	//sha512su1 v17.16b,v16.16b,v7.16b
+	add	v0.2d,v3.2d,v4.2d		// "D + T1"
+.inst	0xce628464	//sha512h2 v4.16b,v3.16b,v2.16b
+	add	v24.2d,v24.2d,v18.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v0.16b,v1.16b,#8
+	ext	v6.16b,v2.16b,v0.16b,#8
+	add	v1.2d,v1.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec08272	//sha512su0 v18.16b,v19.16b
+	ext	v7.16b,v22.16b,v23.16b,#8
+.inst	0xce6680a1	//sha512h v1.16b,v5.16b,v6.16b
+.inst	0xce678a32	//sha512su1 v18.16b,v17.16b,v7.16b
+	add	v3.2d,v2.2d,v1.2d		// "D + T1"
+.inst	0xce648441	//sha512h2 v1.16b,v2.16b,v4.16b
+	add	v25.2d,v25.2d,v19.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v3.16b,v0.16b,#8
+	ext	v6.16b,v4.16b,v3.16b,#8
+	add	v0.2d,v0.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08293	//sha512su0 v19.16b,v20.16b
+	ext	v7.16b,v23.16b,v16.16b,#8
+.inst	0xce6680a0	//sha512h v0.16b,v5.16b,v6.16b
+.inst	0xce678a53	//sha512su1 v19.16b,v18.16b,v7.16b
+	add	v2.2d,v4.2d,v0.2d		// "D + T1"
+.inst	0xce618480	//sha512h2 v0.16b,v4.16b,v1.16b
+	add	v24.2d,v24.2d,v20.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v2.16b,v3.16b,#8
+	ext	v6.16b,v1.16b,v2.16b,#8
+	add	v3.2d,v3.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec082b4	//sha512su0 v20.16b,v21.16b
+	ext	v7.16b,v16.16b,v17.16b,#8
+.inst	0xce6680a3	//sha512h v3.16b,v5.16b,v6.16b
+.inst	0xce678a74	//sha512su1 v20.16b,v19.16b,v7.16b
+	add	v4.2d,v1.2d,v3.2d		// "D + T1"
+.inst	0xce608423	//sha512h2 v3.16b,v1.16b,v0.16b
+	add	v25.2d,v25.2d,v21.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v4.16b,v2.16b,#8
+	ext	v6.16b,v0.16b,v4.16b,#8
+	add	v2.2d,v2.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec082d5	//sha512su0 v21.16b,v22.16b
+	ext	v7.16b,v17.16b,v18.16b,#8
+.inst	0xce6680a2	//sha512h v2.16b,v5.16b,v6.16b
+.inst	0xce678a95	//sha512su1 v21.16b,v20.16b,v7.16b
+	add	v1.2d,v0.2d,v2.2d		// "D + T1"
+.inst	0xce638402	//sha512h2 v2.16b,v0.16b,v3.16b
+	add	v24.2d,v24.2d,v22.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v1.16b,v4.16b,#8
+	ext	v6.16b,v3.16b,v1.16b,#8
+	add	v4.2d,v4.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec082f6	//sha512su0 v22.16b,v23.16b
+	ext	v7.16b,v18.16b,v19.16b,#8
+.inst	0xce6680a4	//sha512h v4.16b,v5.16b,v6.16b
+.inst	0xce678ab6	//sha512su1 v22.16b,v21.16b,v7.16b
+	add	v0.2d,v3.2d,v4.2d		// "D + T1"
+.inst	0xce628464	//sha512h2 v4.16b,v3.16b,v2.16b
+	add	v25.2d,v25.2d,v23.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v0.16b,v1.16b,#8
+	ext	v6.16b,v2.16b,v0.16b,#8
+	add	v1.2d,v1.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08217	//sha512su0 v23.16b,v16.16b
+	ext	v7.16b,v19.16b,v20.16b,#8
+.inst	0xce6680a1	//sha512h v1.16b,v5.16b,v6.16b
+.inst	0xce678ad7	//sha512su1 v23.16b,v22.16b,v7.16b
+	add	v3.2d,v2.2d,v1.2d		// "D + T1"
+.inst	0xce648441	//sha512h2 v1.16b,v2.16b,v4.16b
+	add	v24.2d,v24.2d,v16.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v3.16b,v0.16b,#8
+	ext	v6.16b,v4.16b,v3.16b,#8
+	add	v0.2d,v0.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec08230	//sha512su0 v16.16b,v17.16b
+	ext	v7.16b,v20.16b,v21.16b,#8
+.inst	0xce6680a0	//sha512h v0.16b,v5.16b,v6.16b
+.inst	0xce678af0	//sha512su1 v16.16b,v23.16b,v7.16b
+	add	v2.2d,v4.2d,v0.2d		// "D + T1"
+.inst	0xce618480	//sha512h2 v0.16b,v4.16b,v1.16b
+	add	v25.2d,v25.2d,v17.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v2.16b,v3.16b,#8
+	ext	v6.16b,v1.16b,v2.16b,#8
+	add	v3.2d,v3.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08251	//sha512su0 v17.16b,v18.16b
+	ext	v7.16b,v21.16b,v22.16b,#8
+.inst	0xce6680a3	//sha512h v3.16b,v5.16b,v6.16b
+.inst	0xce678a11	//sha512su1 v17.16b,v16.16b,v7.16b
+	add	v4.2d,v1.2d,v3.2d		// "D + T1"
+.inst	0xce608423	//sha512h2 v3.16b,v1.16b,v0.16b
+	add	v24.2d,v24.2d,v18.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v4.16b,v2.16b,#8
+	ext	v6.16b,v0.16b,v4.16b,#8
+	add	v2.2d,v2.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec08272	//sha512su0 v18.16b,v19.16b
+	ext	v7.16b,v22.16b,v23.16b,#8
+.inst	0xce6680a2	//sha512h v2.16b,v5.16b,v6.16b
+.inst	0xce678a32	//sha512su1 v18.16b,v17.16b,v7.16b
+	add	v1.2d,v0.2d,v2.2d		// "D + T1"
+.inst	0xce638402	//sha512h2 v2.16b,v0.16b,v3.16b
+	add	v25.2d,v25.2d,v19.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v1.16b,v4.16b,#8
+	ext	v6.16b,v3.16b,v1.16b,#8
+	add	v4.2d,v4.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08293	//sha512su0 v19.16b,v20.16b
+	ext	v7.16b,v23.16b,v16.16b,#8
+.inst	0xce6680a4	//sha512h v4.16b,v5.16b,v6.16b
+.inst	0xce678a53	//sha512su1 v19.16b,v18.16b,v7.16b
+	add	v0.2d,v3.2d,v4.2d		// "D + T1"
+.inst	0xce628464	//sha512h2 v4.16b,v3.16b,v2.16b
+	add	v24.2d,v24.2d,v20.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v0.16b,v1.16b,#8
+	ext	v6.16b,v2.16b,v0.16b,#8
+	add	v1.2d,v1.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec082b4	//sha512su0 v20.16b,v21.16b
+	ext	v7.16b,v16.16b,v17.16b,#8
+.inst	0xce6680a1	//sha512h v1.16b,v5.16b,v6.16b
+.inst	0xce678a74	//sha512su1 v20.16b,v19.16b,v7.16b
+	add	v3.2d,v2.2d,v1.2d		// "D + T1"
+.inst	0xce648441	//sha512h2 v1.16b,v2.16b,v4.16b
+	add	v25.2d,v25.2d,v21.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v3.16b,v0.16b,#8
+	ext	v6.16b,v4.16b,v3.16b,#8
+	add	v0.2d,v0.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec082d5	//sha512su0 v21.16b,v22.16b
+	ext	v7.16b,v17.16b,v18.16b,#8
+.inst	0xce6680a0	//sha512h v0.16b,v5.16b,v6.16b
+.inst	0xce678a95	//sha512su1 v21.16b,v20.16b,v7.16b
+	add	v2.2d,v4.2d,v0.2d		// "D + T1"
+.inst	0xce618480	//sha512h2 v0.16b,v4.16b,v1.16b
+	add	v24.2d,v24.2d,v22.2d
+	ld1	{v25.2d},[x3],#16
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v2.16b,v3.16b,#8
+	ext	v6.16b,v1.16b,v2.16b,#8
+	add	v3.2d,v3.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xcec082f6	//sha512su0 v22.16b,v23.16b
+	ext	v7.16b,v18.16b,v19.16b,#8
+.inst	0xce6680a3	//sha512h v3.16b,v5.16b,v6.16b
+.inst	0xce678ab6	//sha512su1 v22.16b,v21.16b,v7.16b
+	add	v4.2d,v1.2d,v3.2d		// "D + T1"
+.inst	0xce608423	//sha512h2 v3.16b,v1.16b,v0.16b
+	add	v25.2d,v25.2d,v23.2d
+	ld1	{v24.2d},[x3],#16
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v4.16b,v2.16b,#8
+	ext	v6.16b,v0.16b,v4.16b,#8
+	add	v2.2d,v2.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xcec08217	//sha512su0 v23.16b,v16.16b
+	ext	v7.16b,v19.16b,v20.16b,#8
+.inst	0xce6680a2	//sha512h v2.16b,v5.16b,v6.16b
+.inst	0xce678ad7	//sha512su1 v23.16b,v22.16b,v7.16b
+	add	v1.2d,v0.2d,v2.2d		// "D + T1"
+.inst	0xce638402	//sha512h2 v2.16b,v0.16b,v3.16b
+	ld1	{v25.2d},[x3],#16
+	add	v24.2d,v24.2d,v16.2d
+	ld1	{v16.16b},[x1],#16		// load next input
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v1.16b,v4.16b,#8
+	ext	v6.16b,v3.16b,v1.16b,#8
+	add	v4.2d,v4.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xce6680a4	//sha512h v4.16b,v5.16b,v6.16b
+	rev64	v16.16b,v16.16b
+	add	v0.2d,v3.2d,v4.2d		// "D + T1"
+.inst	0xce628464	//sha512h2 v4.16b,v3.16b,v2.16b
+	ld1	{v24.2d},[x3],#16
+	add	v25.2d,v25.2d,v17.2d
+	ld1	{v17.16b},[x1],#16		// load next input
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v0.16b,v1.16b,#8
+	ext	v6.16b,v2.16b,v0.16b,#8
+	add	v1.2d,v1.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xce6680a1	//sha512h v1.16b,v5.16b,v6.16b
+	rev64	v17.16b,v17.16b
+	add	v3.2d,v2.2d,v1.2d		// "D + T1"
+.inst	0xce648441	//sha512h2 v1.16b,v2.16b,v4.16b
+	ld1	{v25.2d},[x3],#16
+	add	v24.2d,v24.2d,v18.2d
+	ld1	{v18.16b},[x1],#16		// load next input
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v3.16b,v0.16b,#8
+	ext	v6.16b,v4.16b,v3.16b,#8
+	add	v0.2d,v0.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xce6680a0	//sha512h v0.16b,v5.16b,v6.16b
+	rev64	v18.16b,v18.16b
+	add	v2.2d,v4.2d,v0.2d		// "D + T1"
+.inst	0xce618480	//sha512h2 v0.16b,v4.16b,v1.16b
+	ld1	{v24.2d},[x3],#16
+	add	v25.2d,v25.2d,v19.2d
+	ld1	{v19.16b},[x1],#16		// load next input
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v2.16b,v3.16b,#8
+	ext	v6.16b,v1.16b,v2.16b,#8
+	add	v3.2d,v3.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xce6680a3	//sha512h v3.16b,v5.16b,v6.16b
+	rev64	v19.16b,v19.16b
+	add	v4.2d,v1.2d,v3.2d		// "D + T1"
+.inst	0xce608423	//sha512h2 v3.16b,v1.16b,v0.16b
+	ld1	{v25.2d},[x3],#16
+	add	v24.2d,v24.2d,v20.2d
+	ld1	{v20.16b},[x1],#16		// load next input
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v4.16b,v2.16b,#8
+	ext	v6.16b,v0.16b,v4.16b,#8
+	add	v2.2d,v2.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xce6680a2	//sha512h v2.16b,v5.16b,v6.16b
+	rev64	v20.16b,v20.16b
+	add	v1.2d,v0.2d,v2.2d		// "D + T1"
+.inst	0xce638402	//sha512h2 v2.16b,v0.16b,v3.16b
+	ld1	{v24.2d},[x3],#16
+	add	v25.2d,v25.2d,v21.2d
+	ld1	{v21.16b},[x1],#16		// load next input
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v1.16b,v4.16b,#8
+	ext	v6.16b,v3.16b,v1.16b,#8
+	add	v4.2d,v4.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xce6680a4	//sha512h v4.16b,v5.16b,v6.16b
+	rev64	v21.16b,v21.16b
+	add	v0.2d,v3.2d,v4.2d		// "D + T1"
+.inst	0xce628464	//sha512h2 v4.16b,v3.16b,v2.16b
+	ld1	{v25.2d},[x3],#16
+	add	v24.2d,v24.2d,v22.2d
+	ld1	{v22.16b},[x1],#16		// load next input
+	ext	v24.16b,v24.16b,v24.16b,#8
+	ext	v5.16b,v0.16b,v1.16b,#8
+	ext	v6.16b,v2.16b,v0.16b,#8
+	add	v1.2d,v1.2d,v24.2d			// "T1 + H + K512[i]"
+.inst	0xce6680a1	//sha512h v1.16b,v5.16b,v6.16b
+	rev64	v22.16b,v22.16b
+	add	v3.2d,v2.2d,v1.2d		// "D + T1"
+.inst	0xce648441	//sha512h2 v1.16b,v2.16b,v4.16b
+	sub	x3,x3,#80*8	// rewind
+	add	v25.2d,v25.2d,v23.2d
+	ld1	{v23.16b},[x1],#16		// load next input
+	ext	v25.16b,v25.16b,v25.16b,#8
+	ext	v5.16b,v3.16b,v0.16b,#8
+	ext	v6.16b,v4.16b,v3.16b,#8
+	add	v0.2d,v0.2d,v25.2d			// "T1 + H + K512[i]"
+.inst	0xce6680a0	//sha512h v0.16b,v5.16b,v6.16b
+	rev64	v23.16b,v23.16b
+	add	v2.2d,v4.2d,v0.2d		// "D + T1"
+.inst	0xce618480	//sha512h2 v0.16b,v4.16b,v1.16b
+	add	v0.2d,v0.2d,v26.2d			// accumulate
+	add	v1.2d,v1.2d,v27.2d
+	add	v2.2d,v2.2d,v28.2d
+	add	v3.2d,v3.2d,v29.2d
 
 	cbnz	x2,.Loop_hw
 
-	st1	{v0.4s,v1.4s},[x0]
+	st1	{v0.2d,v1.2d,v2.2d,v3.2d},[x0]		// store context
 
 	ldr	x29,[sp],#16
 	ret
-.size	sha256_block_armv8,.-sha256_block_armv8
+.size	sha512_block_armv8,.-sha512_block_armv8
 #endif
-#ifdef	__KERNEL__
-.globl	sha256_block_neon
-#endif
-.type	sha256_block_neon,%function
-.align	4
-sha256_block_neon:
-	AARCH64_VALID_CALL_TARGET
-.Lneon_entry:
-	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later
-	stp	x29, x30, [sp, #-16]!
-	mov	x29, sp
-	sub	sp,sp,#16*4
-
-	adrp	x16,.LK256
-	add	x16,x16,#:lo12:.LK256
-	add	x2,x1,x2,lsl#6	// len to point at the end of inp
-
-	ld1	{v0.16b},[x1], #16
-	ld1	{v1.16b},[x1], #16
-	ld1	{v2.16b},[x1], #16
-	ld1	{v3.16b},[x1], #16
-	ld1	{v4.4s},[x16], #16
-	ld1	{v5.4s},[x16], #16
-	ld1	{v6.4s},[x16], #16
-	ld1	{v7.4s},[x16], #16
-	rev32	v0.16b,v0.16b		// yes, even on
-	rev32	v1.16b,v1.16b		// big-endian
-	rev32	v2.16b,v2.16b
-	rev32	v3.16b,v3.16b
-	mov	x17,sp
-	add	v4.4s,v4.4s,v0.4s
-	add	v5.4s,v5.4s,v1.4s
-	add	v6.4s,v6.4s,v2.4s
-	st1	{v4.4s,v5.4s},[x17], #32
-	add	v7.4s,v7.4s,v3.4s
-	st1	{v6.4s,v7.4s},[x17]
-	sub	x17,x17,#32
-
-	ldp	w3,w4,[x0]
-	ldp	w5,w6,[x0,#8]
-	ldp	w7,w8,[x0,#16]
-	ldp	w9,w10,[x0,#24]
-	ldr	w12,[sp,#0]
-	mov	w13,wzr
-	eor	w14,w4,w5
-	mov	w15,wzr
-	b	.L_00_48
-
-.align	4
-.L_00_48:
-	ext	v4.16b,v0.16b,v1.16b,#4
-	add	w10,w10,w12
-	add	w3,w3,w15
-	and	w12,w8,w7
-	bic	w15,w9,w7
-	ext	v7.16b,v2.16b,v3.16b,#4
-	eor	w11,w7,w7,ror#5
-	add	w3,w3,w13
-	mov	d19,v3.d[1]
-	orr	w12,w12,w15
-	eor	w11,w11,w7,ror#19
-	ushr	v6.4s,v4.4s,#7
-	eor	w15,w3,w3,ror#11
-	ushr	v5.4s,v4.4s,#3
-	add	w10,w10,w12
-	add	v0.4s,v0.4s,v7.4s
-	ror	w11,w11,#6
-	sli	v6.4s,v4.4s,#25
-	eor	w13,w3,w4
-	eor	w15,w15,w3,ror#20
-	ushr	v7.4s,v4.4s,#18
-	add	w10,w10,w11
-	ldr	w12,[sp,#4]
-	and	w14,w14,w13
-	eor	v5.16b,v5.16b,v6.16b
-	ror	w15,w15,#2
-	add	w6,w6,w10
-	sli	v7.4s,v4.4s,#14
-	eor	w14,w14,w4
-	ushr	v16.4s,v19.4s,#17
-	add	w9,w9,w12
-	add	w10,w10,w15
-	and	w12,w7,w6
-	eor	v5.16b,v5.16b,v7.16b
-	bic	w15,w8,w6
-	eor	w11,w6,w6,ror#5
-	sli	v16.4s,v19.4s,#15
-	add	w10,w10,w14
-	orr	w12,w12,w15
-	ushr	v17.4s,v19.4s,#10
-	eor	w11,w11,w6,ror#19
-	eor	w15,w10,w10,ror#11
-	ushr	v7.4s,v19.4s,#19
-	add	w9,w9,w12
-	ror	w11,w11,#6
-	add	v0.4s,v0.4s,v5.4s
-	eor	w14,w10,w3
-	eor	w15,w15,w10,ror#20
-	sli	v7.4s,v19.4s,#13
-	add	w9,w9,w11
-	ldr	w12,[sp,#8]
-	and	w13,w13,w14
-	eor	v17.16b,v17.16b,v16.16b
-	ror	w15,w15,#2
-	add	w5,w5,w9
-	eor	w13,w13,w3
-	eor	v17.16b,v17.16b,v7.16b
-	add	w8,w8,w12
-	add	w9,w9,w15
-	and	w12,w6,w5
-	add	v0.4s,v0.4s,v17.4s
-	bic	w15,w7,w5
-	eor	w11,w5,w5,ror#5
-	add	w9,w9,w13
-	ushr	v18.4s,v0.4s,#17
-	orr	w12,w12,w15
-	ushr	v19.4s,v0.4s,#10
-	eor	w11,w11,w5,ror#19
-	eor	w15,w9,w9,ror#11
-	sli	v18.4s,v0.4s,#15
-	add	w8,w8,w12
-	ushr	v17.4s,v0.4s,#19
-	ror	w11,w11,#6
-	eor	w13,w9,w10
-	eor	v19.16b,v19.16b,v18.16b
-	eor	w15,w15,w9,ror#20
-	add	w8,w8,w11
-	sli	v17.4s,v0.4s,#13
-	ldr	w12,[sp,#12]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	ld1	{v4.4s},[x16], #16
-	add	w4,w4,w8
-	eor	v19.16b,v19.16b,v17.16b
-	eor	w14,w14,w10
-	eor	v17.16b,v17.16b,v17.16b
-	add	w7,w7,w12
-	add	w8,w8,w15
-	and	w12,w5,w4
-	mov	v17.d[1],v19.d[0]
-	bic	w15,w6,w4
-	eor	w11,w4,w4,ror#5
-	add	w8,w8,w14
-	add	v0.4s,v0.4s,v17.4s
-	orr	w12,w12,w15
-	eor	w11,w11,w4,ror#19
-	eor	w15,w8,w8,ror#11
-	add	v4.4s,v4.4s,v0.4s
-	add	w7,w7,w12
-	ror	w11,w11,#6
-	eor	w14,w8,w9
-	eor	w15,w15,w8,ror#20
-	add	w7,w7,w11
-	ldr	w12,[sp,#16]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w3,w3,w7
-	eor	w13,w13,w9
-	st1	{v4.4s},[x17], #16
-	ext	v4.16b,v1.16b,v2.16b,#4
-	add	w6,w6,w12
-	add	w7,w7,w15
-	and	w12,w4,w3
-	bic	w15,w5,w3
-	ext	v7.16b,v3.16b,v0.16b,#4
-	eor	w11,w3,w3,ror#5
-	add	w7,w7,w13
-	mov	d19,v0.d[1]
-	orr	w12,w12,w15
-	eor	w11,w11,w3,ror#19
-	ushr	v6.4s,v4.4s,#7
-	eor	w15,w7,w7,ror#11
-	ushr	v5.4s,v4.4s,#3
-	add	w6,w6,w12
-	add	v1.4s,v1.4s,v7.4s
-	ror	w11,w11,#6
-	sli	v6.4s,v4.4s,#25
-	eor	w13,w7,w8
-	eor	w15,w15,w7,ror#20
-	ushr	v7.4s,v4.4s,#18
-	add	w6,w6,w11
-	ldr	w12,[sp,#20]
-	and	w14,w14,w13
-	eor	v5.16b,v5.16b,v6.16b
-	ror	w15,w15,#2
-	add	w10,w10,w6
-	sli	v7.4s,v4.4s,#14
-	eor	w14,w14,w8
-	ushr	v16.4s,v19.4s,#17
-	add	w5,w5,w12
-	add	w6,w6,w15
-	and	w12,w3,w10
-	eor	v5.16b,v5.16b,v7.16b
-	bic	w15,w4,w10
-	eor	w11,w10,w10,ror#5
-	sli	v16.4s,v19.4s,#15
-	add	w6,w6,w14
-	orr	w12,w12,w15
-	ushr	v17.4s,v19.4s,#10
-	eor	w11,w11,w10,ror#19
-	eor	w15,w6,w6,ror#11
-	ushr	v7.4s,v19.4s,#19
-	add	w5,w5,w12
-	ror	w11,w11,#6
-	add	v1.4s,v1.4s,v5.4s
-	eor	w14,w6,w7
-	eor	w15,w15,w6,ror#20
-	sli	v7.4s,v19.4s,#13
-	add	w5,w5,w11
-	ldr	w12,[sp,#24]
-	and	w13,w13,w14
-	eor	v17.16b,v17.16b,v16.16b
-	ror	w15,w15,#2
-	add	w9,w9,w5
-	eor	w13,w13,w7
-	eor	v17.16b,v17.16b,v7.16b
-	add	w4,w4,w12
-	add	w5,w5,w15
-	and	w12,w10,w9
-	add	v1.4s,v1.4s,v17.4s
-	bic	w15,w3,w9
-	eor	w11,w9,w9,ror#5
-	add	w5,w5,w13
-	ushr	v18.4s,v1.4s,#17
-	orr	w12,w12,w15
-	ushr	v19.4s,v1.4s,#10
-	eor	w11,w11,w9,ror#19
-	eor	w15,w5,w5,ror#11
-	sli	v18.4s,v1.4s,#15
-	add	w4,w4,w12
-	ushr	v17.4s,v1.4s,#19
-	ror	w11,w11,#6
-	eor	w13,w5,w6
-	eor	v19.16b,v19.16b,v18.16b
-	eor	w15,w15,w5,ror#20
-	add	w4,w4,w11
-	sli	v17.4s,v1.4s,#13
-	ldr	w12,[sp,#28]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	ld1	{v4.4s},[x16], #16
-	add	w8,w8,w4
-	eor	v19.16b,v19.16b,v17.16b
-	eor	w14,w14,w6
-	eor	v17.16b,v17.16b,v17.16b
-	add	w3,w3,w12
-	add	w4,w4,w15
-	and	w12,w9,w8
-	mov	v17.d[1],v19.d[0]
-	bic	w15,w10,w8
-	eor	w11,w8,w8,ror#5
-	add	w4,w4,w14
-	add	v1.4s,v1.4s,v17.4s
-	orr	w12,w12,w15
-	eor	w11,w11,w8,ror#19
-	eor	w15,w4,w4,ror#11
-	add	v4.4s,v4.4s,v1.4s
-	add	w3,w3,w12
-	ror	w11,w11,#6
-	eor	w14,w4,w5
-	eor	w15,w15,w4,ror#20
-	add	w3,w3,w11
-	ldr	w12,[sp,#32]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w7,w7,w3
-	eor	w13,w13,w5
-	st1	{v4.4s},[x17], #16
-	ext	v4.16b,v2.16b,v3.16b,#4
-	add	w10,w10,w12
-	add	w3,w3,w15
-	and	w12,w8,w7
-	bic	w15,w9,w7
-	ext	v7.16b,v0.16b,v1.16b,#4
-	eor	w11,w7,w7,ror#5
-	add	w3,w3,w13
-	mov	d19,v1.d[1]
-	orr	w12,w12,w15
-	eor	w11,w11,w7,ror#19
-	ushr	v6.4s,v4.4s,#7
-	eor	w15,w3,w3,ror#11
-	ushr	v5.4s,v4.4s,#3
-	add	w10,w10,w12
-	add	v2.4s,v2.4s,v7.4s
-	ror	w11,w11,#6
-	sli	v6.4s,v4.4s,#25
-	eor	w13,w3,w4
-	eor	w15,w15,w3,ror#20
-	ushr	v7.4s,v4.4s,#18
-	add	w10,w10,w11
-	ldr	w12,[sp,#36]
-	and	w14,w14,w13
-	eor	v5.16b,v5.16b,v6.16b
-	ror	w15,w15,#2
-	add	w6,w6,w10
-	sli	v7.4s,v4.4s,#14
-	eor	w14,w14,w4
-	ushr	v16.4s,v19.4s,#17
-	add	w9,w9,w12
-	add	w10,w10,w15
-	and	w12,w7,w6
-	eor	v5.16b,v5.16b,v7.16b
-	bic	w15,w8,w6
-	eor	w11,w6,w6,ror#5
-	sli	v16.4s,v19.4s,#15
-	add	w10,w10,w14
-	orr	w12,w12,w15
-	ushr	v17.4s,v19.4s,#10
-	eor	w11,w11,w6,ror#19
-	eor	w15,w10,w10,ror#11
-	ushr	v7.4s,v19.4s,#19
-	add	w9,w9,w12
-	ror	w11,w11,#6
-	add	v2.4s,v2.4s,v5.4s
-	eor	w14,w10,w3
-	eor	w15,w15,w10,ror#20
-	sli	v7.4s,v19.4s,#13
-	add	w9,w9,w11
-	ldr	w12,[sp,#40]
-	and	w13,w13,w14
-	eor	v17.16b,v17.16b,v16.16b
-	ror	w15,w15,#2
-	add	w5,w5,w9
-	eor	w13,w13,w3
-	eor	v17.16b,v17.16b,v7.16b
-	add	w8,w8,w12
-	add	w9,w9,w15
-	and	w12,w6,w5
-	add	v2.4s,v2.4s,v17.4s
-	bic	w15,w7,w5
-	eor	w11,w5,w5,ror#5
-	add	w9,w9,w13
-	ushr	v18.4s,v2.4s,#17
-	orr	w12,w12,w15
-	ushr	v19.4s,v2.4s,#10
-	eor	w11,w11,w5,ror#19
-	eor	w15,w9,w9,ror#11
-	sli	v18.4s,v2.4s,#15
-	add	w8,w8,w12
-	ushr	v17.4s,v2.4s,#19
-	ror	w11,w11,#6
-	eor	w13,w9,w10
-	eor	v19.16b,v19.16b,v18.16b
-	eor	w15,w15,w9,ror#20
-	add	w8,w8,w11
-	sli	v17.4s,v2.4s,#13
-	ldr	w12,[sp,#44]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	ld1	{v4.4s},[x16], #16
-	add	w4,w4,w8
-	eor	v19.16b,v19.16b,v17.16b
-	eor	w14,w14,w10
-	eor	v17.16b,v17.16b,v17.16b
-	add	w7,w7,w12
-	add	w8,w8,w15
-	and	w12,w5,w4
-	mov	v17.d[1],v19.d[0]
-	bic	w15,w6,w4
-	eor	w11,w4,w4,ror#5
-	add	w8,w8,w14
-	add	v2.4s,v2.4s,v17.4s
-	orr	w12,w12,w15
-	eor	w11,w11,w4,ror#19
-	eor	w15,w8,w8,ror#11
-	add	v4.4s,v4.4s,v2.4s
-	add	w7,w7,w12
-	ror	w11,w11,#6
-	eor	w14,w8,w9
-	eor	w15,w15,w8,ror#20
-	add	w7,w7,w11
-	ldr	w12,[sp,#48]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w3,w3,w7
-	eor	w13,w13,w9
-	st1	{v4.4s},[x17], #16
-	ext	v4.16b,v3.16b,v0.16b,#4
-	add	w6,w6,w12
-	add	w7,w7,w15
-	and	w12,w4,w3
-	bic	w15,w5,w3
-	ext	v7.16b,v1.16b,v2.16b,#4
-	eor	w11,w3,w3,ror#5
-	add	w7,w7,w13
-	mov	d19,v2.d[1]
-	orr	w12,w12,w15
-	eor	w11,w11,w3,ror#19
-	ushr	v6.4s,v4.4s,#7
-	eor	w15,w7,w7,ror#11
-	ushr	v5.4s,v4.4s,#3
-	add	w6,w6,w12
-	add	v3.4s,v3.4s,v7.4s
-	ror	w11,w11,#6
-	sli	v6.4s,v4.4s,#25
-	eor	w13,w7,w8
-	eor	w15,w15,w7,ror#20
-	ushr	v7.4s,v4.4s,#18
-	add	w6,w6,w11
-	ldr	w12,[sp,#52]
-	and	w14,w14,w13
-	eor	v5.16b,v5.16b,v6.16b
-	ror	w15,w15,#2
-	add	w10,w10,w6
-	sli	v7.4s,v4.4s,#14
-	eor	w14,w14,w8
-	ushr	v16.4s,v19.4s,#17
-	add	w5,w5,w12
-	add	w6,w6,w15
-	and	w12,w3,w10
-	eor	v5.16b,v5.16b,v7.16b
-	bic	w15,w4,w10
-	eor	w11,w10,w10,ror#5
-	sli	v16.4s,v19.4s,#15
-	add	w6,w6,w14
-	orr	w12,w12,w15
-	ushr	v17.4s,v19.4s,#10
-	eor	w11,w11,w10,ror#19
-	eor	w15,w6,w6,ror#11
-	ushr	v7.4s,v19.4s,#19
-	add	w5,w5,w12
-	ror	w11,w11,#6
-	add	v3.4s,v3.4s,v5.4s
-	eor	w14,w6,w7
-	eor	w15,w15,w6,ror#20
-	sli	v7.4s,v19.4s,#13
-	add	w5,w5,w11
-	ldr	w12,[sp,#56]
-	and	w13,w13,w14
-	eor	v17.16b,v17.16b,v16.16b
-	ror	w15,w15,#2
-	add	w9,w9,w5
-	eor	w13,w13,w7
-	eor	v17.16b,v17.16b,v7.16b
-	add	w4,w4,w12
-	add	w5,w5,w15
-	and	w12,w10,w9
-	add	v3.4s,v3.4s,v17.4s
-	bic	w15,w3,w9
-	eor	w11,w9,w9,ror#5
-	add	w5,w5,w13
-	ushr	v18.4s,v3.4s,#17
-	orr	w12,w12,w15
-	ushr	v19.4s,v3.4s,#10
-	eor	w11,w11,w9,ror#19
-	eor	w15,w5,w5,ror#11
-	sli	v18.4s,v3.4s,#15
-	add	w4,w4,w12
-	ushr	v17.4s,v3.4s,#19
-	ror	w11,w11,#6
-	eor	w13,w5,w6
-	eor	v19.16b,v19.16b,v18.16b
-	eor	w15,w15,w5,ror#20
-	add	w4,w4,w11
-	sli	v17.4s,v3.4s,#13
-	ldr	w12,[sp,#60]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	ld1	{v4.4s},[x16], #16
-	add	w8,w8,w4
-	eor	v19.16b,v19.16b,v17.16b
-	eor	w14,w14,w6
-	eor	v17.16b,v17.16b,v17.16b
-	add	w3,w3,w12
-	add	w4,w4,w15
-	and	w12,w9,w8
-	mov	v17.d[1],v19.d[0]
-	bic	w15,w10,w8
-	eor	w11,w8,w8,ror#5
-	add	w4,w4,w14
-	add	v3.4s,v3.4s,v17.4s
-	orr	w12,w12,w15
-	eor	w11,w11,w8,ror#19
-	eor	w15,w4,w4,ror#11
-	add	v4.4s,v4.4s,v3.4s
-	add	w3,w3,w12
-	ror	w11,w11,#6
-	eor	w14,w4,w5
-	eor	w15,w15,w4,ror#20
-	add	w3,w3,w11
-	ldr	w12,[x16]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w7,w7,w3
-	eor	w13,w13,w5
-	st1	{v4.4s},[x17], #16
-	cmp	w12,#0				// check for K256 terminator
-	ldr	w12,[sp,#0]
-	sub	x17,x17,#64
-	bne	.L_00_48
-
-	sub	x16,x16,#256		// rewind x16
-	cmp	x1,x2
-	mov	x17, #64
-	csel	x17, x17, xzr, eq
-	sub	x1,x1,x17			// avoid SEGV
-	mov	x17,sp
-	add	w10,w10,w12
-	add	w3,w3,w15
-	and	w12,w8,w7
-	ld1	{v0.16b},[x1],#16
-	bic	w15,w9,w7
-	eor	w11,w7,w7,ror#5
-	ld1	{v4.4s},[x16],#16
-	add	w3,w3,w13
-	orr	w12,w12,w15
-	eor	w11,w11,w7,ror#19
-	eor	w15,w3,w3,ror#11
-	rev32	v0.16b,v0.16b
-	add	w10,w10,w12
-	ror	w11,w11,#6
-	eor	w13,w3,w4
-	eor	w15,w15,w3,ror#20
-	add	v4.4s,v4.4s,v0.4s
-	add	w10,w10,w11
-	ldr	w12,[sp,#4]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	add	w6,w6,w10
-	eor	w14,w14,w4
-	add	w9,w9,w12
-	add	w10,w10,w15
-	and	w12,w7,w6
-	bic	w15,w8,w6
-	eor	w11,w6,w6,ror#5
-	add	w10,w10,w14
-	orr	w12,w12,w15
-	eor	w11,w11,w6,ror#19
-	eor	w15,w10,w10,ror#11
-	add	w9,w9,w12
-	ror	w11,w11,#6
-	eor	w14,w10,w3
-	eor	w15,w15,w10,ror#20
-	add	w9,w9,w11
-	ldr	w12,[sp,#8]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w5,w5,w9
-	eor	w13,w13,w3
-	add	w8,w8,w12
-	add	w9,w9,w15
-	and	w12,w6,w5
-	bic	w15,w7,w5
-	eor	w11,w5,w5,ror#5
-	add	w9,w9,w13
-	orr	w12,w12,w15
-	eor	w11,w11,w5,ror#19
-	eor	w15,w9,w9,ror#11
-	add	w8,w8,w12
-	ror	w11,w11,#6
-	eor	w13,w9,w10
-	eor	w15,w15,w9,ror#20
-	add	w8,w8,w11
-	ldr	w12,[sp,#12]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	add	w4,w4,w8
-	eor	w14,w14,w10
-	add	w7,w7,w12
-	add	w8,w8,w15
-	and	w12,w5,w4
-	bic	w15,w6,w4
-	eor	w11,w4,w4,ror#5
-	add	w8,w8,w14
-	orr	w12,w12,w15
-	eor	w11,w11,w4,ror#19
-	eor	w15,w8,w8,ror#11
-	add	w7,w7,w12
-	ror	w11,w11,#6
-	eor	w14,w8,w9
-	eor	w15,w15,w8,ror#20
-	add	w7,w7,w11
-	ldr	w12,[sp,#16]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w3,w3,w7
-	eor	w13,w13,w9
-	st1	{v4.4s},[x17], #16
-	add	w6,w6,w12
-	add	w7,w7,w15
-	and	w12,w4,w3
-	ld1	{v1.16b},[x1],#16
-	bic	w15,w5,w3
-	eor	w11,w3,w3,ror#5
-	ld1	{v4.4s},[x16],#16
-	add	w7,w7,w13
-	orr	w12,w12,w15
-	eor	w11,w11,w3,ror#19
-	eor	w15,w7,w7,ror#11
-	rev32	v1.16b,v1.16b
-	add	w6,w6,w12
-	ror	w11,w11,#6
-	eor	w13,w7,w8
-	eor	w15,w15,w7,ror#20
-	add	v4.4s,v4.4s,v1.4s
-	add	w6,w6,w11
-	ldr	w12,[sp,#20]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	add	w10,w10,w6
-	eor	w14,w14,w8
-	add	w5,w5,w12
-	add	w6,w6,w15
-	and	w12,w3,w10
-	bic	w15,w4,w10
-	eor	w11,w10,w10,ror#5
-	add	w6,w6,w14
-	orr	w12,w12,w15
-	eor	w11,w11,w10,ror#19
-	eor	w15,w6,w6,ror#11
-	add	w5,w5,w12
-	ror	w11,w11,#6
-	eor	w14,w6,w7
-	eor	w15,w15,w6,ror#20
-	add	w5,w5,w11
-	ldr	w12,[sp,#24]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w9,w9,w5
-	eor	w13,w13,w7
-	add	w4,w4,w12
-	add	w5,w5,w15
-	and	w12,w10,w9
-	bic	w15,w3,w9
-	eor	w11,w9,w9,ror#5
-	add	w5,w5,w13
-	orr	w12,w12,w15
-	eor	w11,w11,w9,ror#19
-	eor	w15,w5,w5,ror#11
-	add	w4,w4,w12
-	ror	w11,w11,#6
-	eor	w13,w5,w6
-	eor	w15,w15,w5,ror#20
-	add	w4,w4,w11
-	ldr	w12,[sp,#28]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	add	w8,w8,w4
-	eor	w14,w14,w6
-	add	w3,w3,w12
-	add	w4,w4,w15
-	and	w12,w9,w8
-	bic	w15,w10,w8
-	eor	w11,w8,w8,ror#5
-	add	w4,w4,w14
-	orr	w12,w12,w15
-	eor	w11,w11,w8,ror#19
-	eor	w15,w4,w4,ror#11
-	add	w3,w3,w12
-	ror	w11,w11,#6
-	eor	w14,w4,w5
-	eor	w15,w15,w4,ror#20
-	add	w3,w3,w11
-	ldr	w12,[sp,#32]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w7,w7,w3
-	eor	w13,w13,w5
-	st1	{v4.4s},[x17], #16
-	add	w10,w10,w12
-	add	w3,w3,w15
-	and	w12,w8,w7
-	ld1	{v2.16b},[x1],#16
-	bic	w15,w9,w7
-	eor	w11,w7,w7,ror#5
-	ld1	{v4.4s},[x16],#16
-	add	w3,w3,w13
-	orr	w12,w12,w15
-	eor	w11,w11,w7,ror#19
-	eor	w15,w3,w3,ror#11
-	rev32	v2.16b,v2.16b
-	add	w10,w10,w12
-	ror	w11,w11,#6
-	eor	w13,w3,w4
-	eor	w15,w15,w3,ror#20
-	add	v4.4s,v4.4s,v2.4s
-	add	w10,w10,w11
-	ldr	w12,[sp,#36]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	add	w6,w6,w10
-	eor	w14,w14,w4
-	add	w9,w9,w12
-	add	w10,w10,w15
-	and	w12,w7,w6
-	bic	w15,w8,w6
-	eor	w11,w6,w6,ror#5
-	add	w10,w10,w14
-	orr	w12,w12,w15
-	eor	w11,w11,w6,ror#19
-	eor	w15,w10,w10,ror#11
-	add	w9,w9,w12
-	ror	w11,w11,#6
-	eor	w14,w10,w3
-	eor	w15,w15,w10,ror#20
-	add	w9,w9,w11
-	ldr	w12,[sp,#40]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w5,w5,w9
-	eor	w13,w13,w3
-	add	w8,w8,w12
-	add	w9,w9,w15
-	and	w12,w6,w5
-	bic	w15,w7,w5
-	eor	w11,w5,w5,ror#5
-	add	w9,w9,w13
-	orr	w12,w12,w15
-	eor	w11,w11,w5,ror#19
-	eor	w15,w9,w9,ror#11
-	add	w8,w8,w12
-	ror	w11,w11,#6
-	eor	w13,w9,w10
-	eor	w15,w15,w9,ror#20
-	add	w8,w8,w11
-	ldr	w12,[sp,#44]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	add	w4,w4,w8
-	eor	w14,w14,w10
-	add	w7,w7,w12
-	add	w8,w8,w15
-	and	w12,w5,w4
-	bic	w15,w6,w4
-	eor	w11,w4,w4,ror#5
-	add	w8,w8,w14
-	orr	w12,w12,w15
-	eor	w11,w11,w4,ror#19
-	eor	w15,w8,w8,ror#11
-	add	w7,w7,w12
-	ror	w11,w11,#6
-	eor	w14,w8,w9
-	eor	w15,w15,w8,ror#20
-	add	w7,w7,w11
-	ldr	w12,[sp,#48]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w3,w3,w7
-	eor	w13,w13,w9
-	st1	{v4.4s},[x17], #16
-	add	w6,w6,w12
-	add	w7,w7,w15
-	and	w12,w4,w3
-	ld1	{v3.16b},[x1],#16
-	bic	w15,w5,w3
-	eor	w11,w3,w3,ror#5
-	ld1	{v4.4s},[x16],#16
-	add	w7,w7,w13
-	orr	w12,w12,w15
-	eor	w11,w11,w3,ror#19
-	eor	w15,w7,w7,ror#11
-	rev32	v3.16b,v3.16b
-	add	w6,w6,w12
-	ror	w11,w11,#6
-	eor	w13,w7,w8
-	eor	w15,w15,w7,ror#20
-	add	v4.4s,v4.4s,v3.4s
-	add	w6,w6,w11
-	ldr	w12,[sp,#52]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	add	w10,w10,w6
-	eor	w14,w14,w8
-	add	w5,w5,w12
-	add	w6,w6,w15
-	and	w12,w3,w10
-	bic	w15,w4,w10
-	eor	w11,w10,w10,ror#5
-	add	w6,w6,w14
-	orr	w12,w12,w15
-	eor	w11,w11,w10,ror#19
-	eor	w15,w6,w6,ror#11
-	add	w5,w5,w12
-	ror	w11,w11,#6
-	eor	w14,w6,w7
-	eor	w15,w15,w6,ror#20
-	add	w5,w5,w11
-	ldr	w12,[sp,#56]
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w9,w9,w5
-	eor	w13,w13,w7
-	add	w4,w4,w12
-	add	w5,w5,w15
-	and	w12,w10,w9
-	bic	w15,w3,w9
-	eor	w11,w9,w9,ror#5
-	add	w5,w5,w13
-	orr	w12,w12,w15
-	eor	w11,w11,w9,ror#19
-	eor	w15,w5,w5,ror#11
-	add	w4,w4,w12
-	ror	w11,w11,#6
-	eor	w13,w5,w6
-	eor	w15,w15,w5,ror#20
-	add	w4,w4,w11
-	ldr	w12,[sp,#60]
-	and	w14,w14,w13
-	ror	w15,w15,#2
-	add	w8,w8,w4
-	eor	w14,w14,w6
-	add	w3,w3,w12
-	add	w4,w4,w15
-	and	w12,w9,w8
-	bic	w15,w10,w8
-	eor	w11,w8,w8,ror#5
-	add	w4,w4,w14
-	orr	w12,w12,w15
-	eor	w11,w11,w8,ror#19
-	eor	w15,w4,w4,ror#11
-	add	w3,w3,w12
-	ror	w11,w11,#6
-	eor	w14,w4,w5
-	eor	w15,w15,w4,ror#20
-	add	w3,w3,w11
-	and	w13,w13,w14
-	ror	w15,w15,#2
-	add	w7,w7,w3
-	eor	w13,w13,w5
-	st1	{v4.4s},[x17], #16
-	add	w3,w3,w15			// h+=Sigma0(a) from the past
-	ldp	w11,w12,[x0,#0]
-	add	w3,w3,w13			// h+=Maj(a,b,c) from the past
-	ldp	w13,w14,[x0,#8]
-	add	w3,w3,w11			// accumulate
-	add	w4,w4,w12
-	ldp	w11,w12,[x0,#16]
-	add	w5,w5,w13
-	add	w6,w6,w14
-	ldp	w13,w14,[x0,#24]
-	add	w7,w7,w11
-	add	w8,w8,w12
-	ldr	w12,[sp,#0]
-	stp	w3,w4,[x0,#0]
-	add	w9,w9,w13
-	mov	w13,wzr
-	stp	w5,w6,[x0,#8]
-	add	w10,w10,w14
-	stp	w7,w8,[x0,#16]
-	eor	w14,w4,w5
-	stp	w9,w10,[x0,#24]
-	mov	w15,wzr
-	mov	x17,sp
-	b.ne	.L_00_48
-
-	ldr	x29,[x29]
-	add	sp,sp,#16*4+16
-	ret
-.size	sha256_block_neon,.-sha256_block_neon
