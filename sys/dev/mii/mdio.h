@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.15 2026/11/25 14:14:08 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.16 2026/11/25 14:15:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -166,16 +166,16 @@
 	/* Values 17 to 29 are reserved */
 #define MDIO_PMAPMD_10P2BCTRL	30  /* 10P/2B PMA/PMD control */
 #define MDIO_PMAPMD_10P2BSTAT	31  /* 10P/2B PMA/PMD status */
-#define MDIO_PMAPMD_10P2BLPCTRL	32  /* 10P/2B link partner PMA/D ctrl*/
-#define MDIO_PMAPMD_10P2BLPSTAT	33  /* 10P/2B link partner PMA/D stat*/
+#define MDIO_PMAPMD_10P2BLPCTRL	32  /* 10P/2B LP PMA/PMD control */
+#define MDIO_PMAPMD_10P2BLPSTAT	33  /*			 status */
 	/* Values 34 to 35 are reserved */
 #define MDIO_PMAPMD_10P2BLLOSCNT	36  /* 10P/2B link loss counter */
-#define MDIO_PMAPMD_10P2BRXSNMGN	37  /* 10P/2B RX SNR margin */
-#define MDIO_PMAPMD_10P2BLPRXSNMG	38  /* 10P/2B link partner RX SNR mgn*/
+#define MDIO_PMAPMD_10P2BRXSNRMGN	37  /* 10P/2B RX SNR margin */
+#define MDIO_PMAPMD_10P2BLPRXSNRMG	38  /* 10P/2B LP RX SNR margin */
 #define MDIO_PMAPMD_10P2BLINEATTN	39  /* 10P/2B line attenuation */
-#define MDIO_PMAPMD_10P2BLPLINEATTN	40  /* 10P/2B link partner line atten*/
+#define MDIO_PMAPMD_10P2BLPLINEATTN	40  /* 10P/2B LP line attenuation */
 #define MDIO_PMAPMD_10P2BLQTHRES	41  /* 10P/2B line quality thresholds*/
-#define MDIO_PMAPMD_10P2BLPLQLTHRES	42  /* 10P/2B link partner LQ thresh.*/
+#define MDIO_PMAPMD_10P2BLPLQLTHRES	42  /* 10P/2B LP LQ thresholds */
 #define MDIO_PMAPMD_10PFECCOERRS	43  /* 10P FEC correctable errors cnt*/
 #define MDIO_PMAPMD_10PFECUNCOERRS	44  /* 10P FEC uncorrectable err cnt */
 #define MDIO_PMAPMD_10PLPFECCOERRS	45  /* 10P LP FEC correctable err cnt*/
@@ -281,12 +281,12 @@
 #define MDIO_PMAPMD_10GRFECUNCOBLCNTL	174 /* 10G-R FEC uncorrect blks cntL */
 #define MDIO_PMAPMD_10GRFECUNCOBLCNTH	175 /* 10G-R FEC uncorrect blks cntH */
 	/* Values 176 to 178 are reserved */
-#define MDIO_PMAPMD_CAUI4C2MRECCTLE	179 /* CAUI-4 Chip2Mod recomme. CTLE */
-#define MDIO_PMAPMD_CAUI4C2CTERDIL0	180 /* CAUI-4 Ch2Ch TxEq RxDir lane0 */
+#define MDIO_PMAPMD_CAUI4C2MRECCTLE	179 /* CAUI-4 C2M recommended CTLE */
+#define MDIO_PMAPMD_CAUI4C2CTERDIL0	180 /* CAUI-4 C2C TxEq RxDir lane0 */
 #define MDIO_PMAPMD_CAUI4C2CTERDIL1	181 /* lane1 */
 #define MDIO_PMAPMD_CAUI4C2CTERDIL2	182 /* lane2 */
 #define MDIO_PMAPMD_CAUI4C2CTERDIL3	183 /* lane3 */
-#define MDIO_PMAPMD_CAUI4C2CTETDEL0	184 /* CAUI-4 Ch2Ch TxEq TxDet lane0 */
+#define MDIO_PMAPMD_CAUI4C2CTETDEL0	184 /* CAUI-4 C2C TxEq TxDet lane0 */
 #define MDIO_PMAPMD_CAUI4C2CTETDEL1	185 /* lane1 */
 #define MDIO_PMAPMD_CAUI4C2CTETDEL2	186 /* lane2 */
 #define MDIO_PMAPMD_CAUI4C2CTETDEL3	187 /* lane3 */
@@ -517,8 +517,8 @@
 	/* Value 21 is reserved */
 #define MDIO_PHYXS_EEEWKERRCNT	22  /* EEE wake error counter */
 	/* Value 23 is reserved */
-#define MDIO_PHYXS_10GXGXLNSTAT	24  /* 10G-X PHY XGXS lane status */
-#define MDIO_PHYXS_10GXGXSTSCTRL 25 /* 10G-X PHY XGXS test control */
+#define MDIO_PHYXS_10GXGXSLNSTAT 24 /* 10G PHY XGXS lane status */
+#define MDIO_PHYXS_10GXGXSTSCTRL 25 /* 10G PHY XGXS test control */
 	/* Values 26 to 1799 are reserved */
 #define MDIO_PHYXS_TSYNCCSP	  1800 /* TimeSync PHY XS capability */
 #define MDIO_PHYXS_TSYNCTXMAXDLYL 1801 /* TimeSync PHY XS TX MAX delay L */
@@ -553,7 +553,7 @@
 	/* Value 21 is reserved */
 #define MDIO_DTEXS_EEEWKERRCNT	22  /* EEE wake error counter */
 	/* Value 23 is reserved */
-#define MDIO_DTEXS_10GXGXLNSTAT	24  /* 10G DTE XGXS lane status */
+#define MDIO_DTEXS_10GXGXSLNSTAT 24 /* 10G DTE XGXS lane status */
 #define MDIO_DTEXS_10GXGXSTSCTRL 25 /* 10G DTE XGXS test control */
 	/* Values 26 to 1799 are reserved */
 #define MDIO_DTEXS_TSYNCCAP	  1800 /* TimeSync DTE XS capability */
