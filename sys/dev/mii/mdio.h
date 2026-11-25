@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.33 2026/11/25 14:24:45 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.34 2026/11/25 14:25:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -333,7 +333,16 @@
 #define MDIO_PMAPMD_2B_EXTPMDPARAM8   109 /*				8 */
 	/* Values from 110 to 128 are reserved */
 #define MDIO_PMAPMD_MULTGT_STAT	       129 /* MultiGBASE-T status */
+
 #define MDIO_PMAPMD_MULTGT_PASWPOLAR   130 /* MultiGBASE-T pair swap & polar */
+#define   PMAPMD_MULTGT_PASWPOLAR_D	__BIT(11) /* Pair D polarity */
+#define   PMAPMD_MULTGT_PASWPOLAR_C	__BIT(10) /*	C	   */
+#define   PMAPMD_MULTGT_PASWPOLAR_B	__BIT(9)  /*	B	   */
+#define   PMAPMD_MULTGT_PASWPOLAR_A	__BIT(8)  /*	A	   */
+#define   PMAPMD_MULTGT_PASWPOLAR_MDI	__BITS(1, 0) /* MDI/MDI-X connection */
+#define   PMAPMD_MULTGT_PASWPOLAR_MDI_NORMAL 3 /* No crossover */
+#define   PMAPMD_MULTGT_PASWPOLAR_MDI_X	     0 /* Pair A/B and C/D crossover */
+
 #define MDIO_PMAPMD_MULTGT_TXPWBOSHRCH 131 /*
 					    * MultiGBASE-T power backoff and
 					    * PHY short reach setting
