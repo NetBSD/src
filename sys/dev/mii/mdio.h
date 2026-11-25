@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.11 2026/11/25 14:10:53 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.12 2026/11/25 14:12:00 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,9 +35,7 @@
 /*
  * IEEE 802.3 Clause 45 definitions.
  * From:
- *	IEEE 802.3 2015
- *	IEEE 802.3at
- *	IEEE 802.3av
+ *	IEEE 802.3-2022
  */
 
 /*
@@ -55,6 +53,8 @@
 #define	MDIO_MMD_SEPPMA2	9
 #define	MDIO_MMD_SEPPMA3	10
 #define	MDIO_MMD_SEPPMA4	11
+#define MDIO_MMD_OFDM_PMAPMD	12
+#define MDIO_MMD_PU		13
 #define	MDIO_MMD_CL22EXT	29
 #define	MDIO_MMD_VNDSP1		30
 #define	MDIO_MMD_VNDSP2		31
@@ -146,7 +146,7 @@
 #define MDIO_PMAPMD_10GTXDIS		9   /* 10G PMA/PMD transmit disable */
 #define MDIO_PMAPMD_RXSIGDTCT		10  /* 10G PMD receive signal detect */
 #define MDIO_PMAPMD_EXTABLTY		11  /* 10G PMA/PMD ext. ability reg */
-#define MDIO_PMAPMD_P2MPABLTY		12  /* P2MP ability register(802.3av)*/
+#define MDIO_PMAPMD_P2MPABLTY		12  /* P2MP ability register */
 #define MDIO_PMAPMD_40G100GEXTABLTY	13  /* 40G/100G extended ability */
 #define MDIO_PMAPMD_PKGID1		14  /* PMA/PMD package identifier 1 */
 #define MDIO_PMAPMD_PKGID2		15  /* PMA/PMD package identifier 2 */
