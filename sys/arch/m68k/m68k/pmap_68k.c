@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.114 2026/11/25 12:10:53 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.115 2026/11/25 12:41:33 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.114 2026/11/25 12:10:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.115 2026/11/25 12:41:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1124,12 +1124,12 @@ struct pmap_atc {
 };
 
 #define	ATC_F_ALL	__BIT(0)	/* hit it all */
-#define	ATC_F_PV	__BIT(1)	/* result of a P->V operation */
-#define	ATC_F_USER	__BIT(2)	/* user VAs involved */
-#define	ATC_F_SUPER	__BIT(3)	/* supervisor VAs involved */
-#define	ATC_F_IC	__BIT(4)	/* also flush the I cache */
-#define	ATC_F_DC	__BIT(5)	/* also flush the D cache */
+#define	ATC_F_USER	__BIT(1)	/* user VAs involved */
+#define	ATC_F_SUPER	__BIT(2)	/* supervisor VAs involved */
+#define	ATC_F_IC	__BIT(3)	/* also flush the I cache */
+#define	ATC_F_DC	__BIT(4)	/* also flush the D cache */
 #define	ATC_F_BC	(ATC_F_IC|ATC_F_DC)
+#define	ATC_F_PV	__BIT(5)	/* result of a P->V operation */
 #define	ATC_F_K		__BIT(6)	/* result of pmap_k*() */
 #define	ATC_F_ENTER	__BIT(7)	/* result of an "enter" */
 #define	ATC_F_REMOVE	__BIT(8)	/* result of a "remove" */
