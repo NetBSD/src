@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.38 2026/11/24 08:26:02 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.39 2026/11/25 06:25:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.38 2026/11/24 08:26:02 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.39 2026/11/25 06:25:54 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -804,7 +804,7 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 		}
 	},
 	// 	FIELDINFO(12, 4, "BRPs") special handling
-	// 	FIELDINFO(23,20, "WRPs") special handling
+	// 	FIELDINFO(20, 4, "WRPs") special handling
 	//	FIELDINFO(28, 4, "CTX_CMPs") special handling
 	{
 		FIELDINFO(32, 4, "PMSVer") {
