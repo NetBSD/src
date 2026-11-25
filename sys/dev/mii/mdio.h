@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.45 2026/11/25 14:31:19 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.46 2026/11/25 14:31:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -224,7 +224,23 @@
 #define   PMAPMD_CTRL2_TYPE_10G_CX4	0x00
 
 #define MDIO_PMAPMD_STAT2	8   /* PMA/PMD status 2 */
+#define   PMAPMD_STAT2_TXFAULT_ABLTY	0x2000 /* Transmit fault ability */
+#define   PMAPMD_STAT2_RXFAULT_ABLTY	0x1000 /* Receive fault ability */
+#define   PMAPMD_STAT2_TXFAULT		0x0800 /* Transmit fault */
+#define   PMAPMD_STAT2_RXFAULT		0x0400 /* Receive fault */
+#define   PMAPMD_STAT2_EXT_ABLTY	0x0200 /* has extended abilities */
+#define   PMAPMD_STAT2_PMDTXDIS_ABLTY	0x0100 /* PMD TX disable ability */
+#define   PMAPMD_STAT2_10GSR_ABLTY	0x0080 /* PMA/PMD 10GBASE-SR ability */
+#define   PMAPMD_STAT2_10GLR_ABLTY	0x0040 /* PMA/PMD 10GBASE-LR ability */
+#define   PMAPMD_STAT2_10GER_ABLTY	0x0020 /* PMA/PMD 10GBASE-ER ability */
+#define   PMAPMD_STAT2_10GLX4_ABLTY	0x0010 /* PMA/PMD 10GBASE-LX4 ablty */
+#define   PMAPMD_STAT2_10GSW_ABLTY	0x0008 /* PMA/PMD 10GBASE-SW ability */
+#define   PMAPMD_STAT2_10GLW_ABLTY	0x0004 /* PMA/PMD 10GBASE-LW ability */
+#define   PMAPMD_STAT2_10GEW_ABLTY	0x0002 /* PMA/PMD 10GBASE-EW ability */
+#define   PMAPMD_STAT2_PMA_LOOPBACK	0x0001 /* PMA loopback ability */
 #define MDIO_PMAPMD_TXDIS	9   /* PMA/PMD transmit disable */
+#define   PMAPMD_TXDIS_PMDTX_LANE(x)	(2 << (x)) /* PMD TX disable lane x */
+#define   PMAPMD_TXDIS_GLOBAL_PMD	0x0001 /* Global PMD transmit dis. */
 #define MDIO_PMAPMD_RXSIGDTCT	10  /* PMD receive signal detect */
 
 #define MDIO_PMAPMD_EXTABLTY	11  /* PMA/PMD extended ability */
