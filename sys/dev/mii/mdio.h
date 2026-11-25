@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.10 2019/01/07 01:37:05 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.11 2026/11/25 14:10:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -430,7 +430,7 @@
 #define	MDIO_PCS_BASERTSTAT2	33	/* BASE-R & 10G-T PCS status 2 */
 #define	MDIO_PCS_10GRTPSEEDA(x)		/* 10G-R PCS test pattern seed A */ \
 				(34 + (x)) /* 0 to 3 */
-#define	MDIO_PCS_10GRTPSEEDB		/* 10G-R PCS test pattern seed B */ \
+#define	MDIO_PCS_10GRTPSEEDB(x)		/* 10G-R PCS test pattern seed B */ \
 				(38 + (x)) /* 0 to 3 */
 #define	MDIO_PCS_10GRTPCTRL	42	/* 10G-R PCS test pattern control */
 #define	MDIO_PCS_10GRTPERRCNT	43	/* 10G-R PCS test pattern err counter*/
