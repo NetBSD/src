@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_image.S,v 1.4 2026/11/25 09:32:36 isaki Exp $	*/
+/*	$NetBSD: exec_image.S,v 1.5 2026/11/25 09:44:14 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto.
@@ -49,8 +49,6 @@ ENTRY_NOPROFILE(exec_image)
 	movl		%d5,%sp@-		| push last arg (esym)
 	movel		SRAM_MEMSIZE,%sp@-	| second arg (physsize)
 	pea		%a5@			| first arg (firstpa)
-
-	oriw		#0x2700,%sr
 
 	movq		#0,%d0			| reg arg (unused)
 	movq		#0,%d1			| reg arg (unused)
