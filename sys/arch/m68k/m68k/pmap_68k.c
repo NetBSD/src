@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.115 2026/11/25 12:41:33 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.116 2026/11/25 13:18:32 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.115 2026/11/25 12:41:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.116 2026/11/25 13:18:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,6 +589,9 @@ EVCNT_ATTACH_STATIC(pmap_atc_pv_skipped_ev);
 static struct evcnt pmap_atc_pv_cpushp_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "pv cpushp");
 EVCNT_ATTACH_STATIC(pmap_atc_pv_cpushp_ev);
+static struct evcnt pmap_atc_pv_cinvp_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "pv cinvp");
+EVCNT_ATTACH_STATIC(pmap_atc_pv_cinvp_ev);
 
 __CTASSERT(ATC_MAXVA == 8);
 static struct evcnt pmap_atc_0_ev =
@@ -1669,9 +1672,15 @@ pmap_atc_invalidate_pv(struct pv_entry *pv, paddr_t pa, uint16_t atc_flags)
 			   pv->pv_pmap != pmap_percpu()->pc_pmap)) {
 #if MMU_CONFIG_68040_CLASS
 		/* push the page, if needed. */
-		if (MMU_IS_68040_CLASS && (atc_flags & ATC_F_DC) != 0) {
-			pmap_evcnt(atc_pv_cpushp);
-			cpushp_dc40(pa);
+		if (MMU_IS_68040_CLASS) {
+			if (atc_flags & ATC_F_DC) {
+				pmap_evcnt(atc_pv_cpushp);
+				cpushp_dc40(pa);
+			}
+			if (atc_flags & ATC_F_IC) {
+				pmap_evcnt(atc_pv_cinvp);
+				cinvp_ic40(pa);
+			}
 		}
 #endif
 		pmap_evcnt(atc_pv_skipped);
@@ -2053,29 +2062,6 @@ pmap_load_urp(paddr_t urp)
 	pmap_percpu()->pc_lev1pa = urp;
 	(*pmap_load_urp_func)(urp);
 }
-
-#if defined(MULTIPROCESSOR)
-/*
- * pmap_reload_urp:
- *
- *	Re-load the user root table into the MMU for this pmap
- *	if it's gotten a new one since the last time.
- */
-static void
-pmap_reload_urp(pmap_t pmap)
-{
-	struct pmap_percpu *pc = pmap_percpu();
-
-	/*
-	 * The sender of the reload message holds the pmap lock,
-	 * ensuring the validity of pmap->pm_lev1pa.
-	 */
-
-	if (pmap == pc->pc_pmap && pmap->pm_lev1pa != pc->pc_lev1pa) {
-		pmap_load_urp(pmap->pm_lev1pa);
-	}
-}
-#endif /* MULTIPROCESSOR */
 
 static inline void
 pmap_set_lev1map(pmap_t pmap, struct pmap_table *pt, paddr_t pa)
@@ -4120,14 +4106,10 @@ pmap_activate(struct lwp *l)
 	struct pmap_percpu *pc = pmap_percpu();
 
 	KASSERT(l == curlwp);
-#if 0
-	KASSERT(pmap_atc_check());
-#else
 	if (__predict_false(pc->pc_atc.atc_count != 0)) {
 		pmap_evcnt(atc_activate);
 		pmap_atc_process();
 	}
-#endif
 
 	/*
 	 * Because the kernel has a separate root pointer, we don't
@@ -4557,11 +4539,6 @@ pmap_percpu_init(struct cpu_info *ci)
 	va += PAGE_SIZE;
 	ci->ci_tmpva_dst = va;
 	va += PAGE_SIZE;
-
-	/* Point at the kernel pmap. */
-	va = (vaddr_t)ci;
-	va += sizeof(struct cpu_info);
-	((struct pmap_percpu *)va)->pc_pmap = pmap_kernel();
 
 	/* Fin. */
 }
@@ -5775,8 +5752,7 @@ pmap_bootstrap2(void)
 	/* Initialize the kernel pmap. */
 	pmap_pinit(pmap_kernel(), Sysseg_pa);
 
-	/* reference the kernel pmap */
-	pmap_percpu()->pc_pmap = pmap_kernel();
+	/* perform per-cpu pmap setup for the boot cpu */
 	pmap_percpu_start();
 
 	/* Initialize lwp0 u-area. */
