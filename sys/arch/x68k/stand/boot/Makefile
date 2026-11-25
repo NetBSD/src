@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2026/05/05 10:41:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.36 2026/11/25 09:32:35 isaki Exp $
 
 NOMAN=		# defined
 
@@ -21,7 +21,7 @@ BINDIR=		/usr/mdec
 BINMODE=	444
 STRIPFLAG=
 
-SRCS=		srt0.S boot.c conf.c switch.c exec_image.S
+SRCS=		srt0.S boot.c conf.c switch.c
 SRCS+=		if_ne.c ne.c dp8390.c
 S=		${.CURDIR}/../../../..
 M=		${.CURDIR}/../..

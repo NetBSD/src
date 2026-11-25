@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_image.S,v 1.3 2024/01/07 07:58:34 isaki Exp $	*/
+/*	$NetBSD: exec_image.S,v 1.4 2026/11/25 09:32:36 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto.
@@ -27,8 +27,8 @@
 
 #include <machine/asm.h>
 
-#ifndef LASTADDR
-#define LASTADDR	(0x00ed0008)
+#ifndef SRAM_MEMSIZE
+#define SRAM_MEMSIZE	(0x00ed0008)
 #endif
 
 	.text
@@ -46,40 +46,12 @@ ENTRY_NOPROFILE(exec_image)
 	moveml		%sp@+,%a4-%a6
 	moveml		%sp@+,%d5-%d7
 
-/* copy the trampoline to the last physical page. */
-	moval		LASTADDR,%sp		| tmpstack from end of physmem
-	lea		%sp@(-4096),%a3		| use last phys page as tramp
-
-	movl		#(end_trampoline-trampoline),%sp@-
-	pea		%pc@(trampoline)
-	pea		%a3@
-	jbsr		_C_LABEL(memcpy)	| memcpy() is still alive
-	lea		%sp@(12),%sp
-
-	jmp		%a3@			| jump to tramp
-
-ASENTRY_NOPROFILE(trampoline)
-||	%a4:	loaded
-||	%a5:	executed
-||	%a6:	entry
-||	%d5:	size
-||	%d6:	bootdev
-||	%d7:	boothowto
 	movl		%d5,%sp@-		| push last arg (esym)
-	movel		LASTADDR,%sp@-		| second arg (physsize)
+	movel		SRAM_MEMSIZE,%sp@-	| second arg (physsize)
 	pea		%a5@			| first arg (firstpa)
 
-	cmpl		%a4,%a5			| if (l == x)
-	beq		L1			|	copy not required
-
-/* this may overwrite the trap vectors; disable interrupt. */
 	oriw		#0x2700,%sr
 
-L0:	movb		%a4@+,%a5@+		| copy kern to x
-	subql		#1,%d5
-	bne		L0
-
-L1:
 	movq		#0,%d0			| reg arg (unused)
 	movq		#0,%d1			| reg arg (unused)
 	movq		#0,%d2			| reg arg (unused)
@@ -95,9 +67,7 @@ L1:
 	moval		%d0,%a4			| reg arg (unused)
 	moval		%d0,%a5			| reg arg (unused)
 	moval		%d0,%a6			| reg arg (unused)
-	movec		%a1,%vbr		| clear vbr
 
 	jsr		%a0@			| here we go!
 
 	/* NOTREACHED */
-end_trampoline:

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.33 2025/08/08 03:31:20 isaki Exp $	*/
+/*	$NetBSD: boot.c,v 1.34 2026/11/25 09:32:35 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -39,9 +39,6 @@
 #include "iocs.h"
 #include "switch.h"
 
-#include "exec_image.h"
-
-
 #define HEAP_START	((void*) 0x00080000)
 #define HEAP_END	((void*) 0x000fffff)
 #define EXSCSI_BDID	((void*) 0x00ea0001)
@@ -70,6 +67,8 @@ int bootmenu(void);
 void bootmain(int);
 extern int detectmpu(void);
 extern int badbaddr(void *);
+extern void exec_image2(unsigned int, unsigned int, unsigned int,
+    int, int, int);
 
 extern struct fs_ops file_system_ustarfs[];
 extern struct fs_ops file_system_nfs[];
@@ -234,8 +233,8 @@ doboot(const char *file, int flags)
 		return;
 	}
 
-	exec_image(marks[MARK_START], 0, marks[MARK_ENTRY]-marks[MARK_START],
-		   marks[MARK_END]-marks[MARK_START], bootdev, flags);
+	exec_image2(marks[MARK_START], 0, marks[MARK_ENTRY] - marks[MARK_START],
+	    marks[MARK_END] - marks[MARK_START], bootdev, flags);
 
 	return;
 }

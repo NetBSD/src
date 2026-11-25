@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.4 2020/08/16 06:43:43 isaki Exp $
+$NetBSD: version,v 1.5 2026/11/25 09:32:36 isaki Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -8,3 +8,4 @@ is taken as the current.
 1.1:	Fix FFS and LFS boot from SCSI HD and floppies.  Always print version.
 1.2:	Initialize the screen.
 2.0:	Rewrite mostly.  Support xxboot_ustarfs.
+2.1:	Avoid writing to msgbuf region.
