@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.44 2026/11/25 14:30:49 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.45 2026/11/25 14:31:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -522,11 +522,11 @@
 	/* Value 1511 is reserved */
 	/* Values from 1513 to 1599 are reserved */
 #define MDIO_PMAPMD_PRBSTXERRCNT(x)	     /* PRBS Tx Error Counter */ \
-					(1600 + (x)) /* lane0 to 9 */
-	/* Values from 1610 to 1699 are reserved */
+					(1600 + (x)) /* lane0 to 15 */
+	/* Values from 1616 to 1699 are reserved */
 #define MDIO_PMAPMD_PRBSRXERRCNT(x)	     /* PRBS Rx Error Counter */ \
-					(1700 + (x)) /* lane0 to 9 */
-	/* Values from 1710 to 1799 are reserved */
+					(1700 + (x)) /* lane0 to 15 */
+	/* Values from 1716 to 1799 are reserved */
 #define MDIO_PMAPMD_TSYNC_CAP	    1800 /* TimeSync PMA/PMD capability */
 #define MDIO_PMAPMD_TSYNC_TXMAXDLYL 1801 /* TimeSync PMA/PMD TX MAX delay L */
 #define MDIO_PMAPMD_TSYNC_TXMAXDLYH 1802 /*				  H */
