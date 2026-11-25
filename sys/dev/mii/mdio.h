@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.42 2026/11/25 14:29:48 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.43 2026/11/25 14:30:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -442,24 +442,76 @@
 					(300 + ((x) * 2)) /* lane0 to 19 */
 #define MDIO_PMAPMD_BASER_FECCORBLKCNTH(x)  /* BASE-R FEC Corr. Blk. Cnt H */ \
 					(301 + ((x) * 2)) /* lane0 to 19 */
-	/* Values from 340 to 699 are reserved */
+	/* Values from 340 to 399 are reserved */
+#define MDIO_PMAPMD_2HG4HGAUI_CTLE(x)	/* [24]00GAUI-{8,16} recomm. CTLE */ \
+					(400 + (x)) /* lane0 to 7 */
+#define MDIO_PMAPMD_4HGAUI_CTLE2(x)	/* 400GAUI-16 recomm. CTLE */ \
+					(408 + (x)) /* lane8 to 15 */
+	/* Values from 410 to 499 are reserved */
+#define MDIO_PMAPMD_50G4HGAUI_TXREQRXDIR(x) /* {5,10,20,40}0GAUI-n TX eq. */ \
+					(500 + (x)) /* RX dir. lane0 to 15 */
+#define MDIO_PMAPMD_50G4HGAUI_TXREQTXDIR(x) /* {5,10,20,40}0GAUI-n TX eq. */ \
+					(500 + (x)) /* TX dir. lane0 to 15 */
+	/* Values from 532 to 599 are reserved */
+#define MDIO_PMAPMD_PREC_CTL_TXO      600 /* PMA precoder control TX output */
+#define MDIO_PMAPMD_PREC_CTL_TXI      601 /*			  TX input */
+#define MDIO_PMAPMD_PREC_CTL_RXO      602 /*			  RX output */
+#define MDIO_PMAPMD_PREC_CTL_RXI      603 /*			  RX input */
+#define MDIO_PMAPMD_PREC_REQ_FLAG     604 /* PMA precoder request flag */
+#define MDIO_PMAPMD_PREC_REQ_RXI_STAT 605 /* PMA precoder req. RX input stat */
+#define MDIO_PMAPMD_PREC_REQ_TXI_STAT 606 /*		       TX input stat */
+	/* Values from 607 to 649 are reserved */
+					/* RS-FEC degraded SER registers */
+#define MDIO_PMAPMD_RSFEC_DEG_SER_ACTTL	650   /* Activate threshold L */
+#define MDIO_PMAPMD_RSFEC_DEG_SER_ACTTH	651   /*		    H */
+#define MDIO_PMAPMD_RSFEC_DEG_SER_DEACTTL 652 /* Deactivate threshold L */
+#define MDIO_PMAPMD_RSFEC_DEG_SER_DEACTTH 653 /*		      H */
+	/* Values from 656 to 699 are reserved */
 #define MDIO_PMAPMD_BASER_FECUNCORBLKCNTL(x) /* BASE-R FEC UnCorr. Blk. CntL*/ \
 					(700 + ((x) * 2)) /* lane0 to 19 */
 #define MDIO_PMAPMD_BASER_FECUNCORBLKCNTH(x) /* BASE-R FEC UnCorr. Blk. CntH*/ \
 					(701 + ((x) * 2)) /* lane0 to 19 */
-	/* Values from 740 to 1099 are reserved */
+	/* Values from 740 to 799 are reserved */
+#define MDIO_PMAPMD_TX_OPTCHAN_CTRL	800 /* TX optical channel control */
+#define MDIO_PMAPMD_TX_OPTCHAN_ABLTY1	801 /*			  ability 1 */
+#define MDIO_PMAPMD_TX_OPTCHAN_ABLTY2	802 /*			  ability 2 */
+#define MDIO_PMAPMD_TX_OPTCHAN_ABLTY3	803 /*			  ability 3 */
+	/* Values from 804 to 819 are reserved */
+#define MDIO_PMAPMD_RX_OPTCHAN_CTRL	820 /* RX optical channel control */
+#define MDIO_PMAPMD_RX_OPTCHAN_ABLTY1	821 /*			  ability 1 */
+#define MDIO_PMAPMD_RX_OPTCHAN_ABLTY2	822 /*			  ability 2 */
+#define MDIO_PMAPMD_RX_OPTCHAN_ABLTY3	823 /*			  ability 3 */
+	/* Values from 824 to 899 are reserved */
+#define MDIO_PMAPMD_BASEH_CTRL		900 /* BASE-H PMA/PMD control */
+	/* Values from 901 to 999 are reserved */
+#define MDIO_PMAPMD_NX25GEPON_EXTABLTY1	1000 /* Nx25G-EPON PMA/PMD ext. abi1 */
+#define MDIO_PMAPMD_NX25GEPON_EXTABLTY2	1001 /*		  extended ability 2 */
+#define MDIO_PMAPMD_NX25GEPON_EXTABLTY3	1002 /*				   3 */
+	/* Values from 1003 to 1099 are reserved */
 #define MDIO_PMAPMD_BASER_LPCOEFUPD(x)	    /* BASE-R LP coefficient update */\
 					(1100 + (x)) /* lane0 to 9 */
-	/* Values from 1110 to 1199 are reserved */
+	/* Values from 1110 to 1119 are reserved */
+#define MDIO_PMAPMD_BASER_PAM4_LP_CTL(x) /* BASE-R PAM4 PMD training LP CTL*/ \
+					(1120 + (x)) /* lane0 to 3 */
+	/* Values from 1124 to 1199 are reserved */
 #define MDIO_PMAPMD_BASER_LPSTATRPT(x)	    /* BASE-R LP status report */ \
 					(1200 + (x)) /* lane0 to 9 */
-	/* Values from 1210 to 1299 are reserved */
+	/* Values from 1210 to 1219 are reserved */
+#define MDIO_PMAPMD_BASER_PAM4_LP_STA(x) /* BASE-R PAM4 PMD training LP STA*/ \
+					(1220 + (x)) /* lane0 to 3 */
+	/* Values from 1224 to 1299 are reserved */
 #define MDIO_PMAPMD_BASER_LDCOEFUPD(x)	    /* BASE-R LD coefficient update */\
 					(1300 + (x)) /* lane0 to 9 */
-	/* Values from 1310 to 1399 are reserved */
+	/* Values from 1310 to 1319 are reserved */
+#define MDIO_PMAPMD_BASER_PAM4_LD_CTL(x) /* BASE-R PAM4 PMD training LD CTL*/ \
+					(1320 + (x)) /* lane0 to 3 */
+	/* Values from 1324 to 1399 are reserved */
 #define MDIO_PMAPMD_BASER_LDSTATRPT(x)	    /* BASE-R LD status report */ \
 					(1400 + (x)) /* lane0 to 9 */
-	/* Values from 1410 to 1449 are reserved */
+	/* Values from 1410 to 1419 are reserved */
+#define MDIO_PMAPMD_BASER_PAM4_LD_STA(x) /* BASE-R PAM4 PMD training LD STA*/ \
+					(1420 + (x)) /* lane0 to 3 */
+	/* Values from 1424 to 1449 are reserved */
 #define MDIO_PMAPMD_PMDTRAINPATTERN(x)	    /* PMD training pattern */	\
 					(1450 + (x)) /* lane0 to 3 */
 	/* Values from 1454 to 1499 are reserved */
@@ -467,7 +519,8 @@
 #define MDIO_PMAPMD_PRBSPATTSTCTRL	1501 /* PRBS pattern testing control */
 	/* Values from 1502 to 1509 are reserved */
 #define MDIO_PMAPMD_SQWVTSTCTRL		1510 /* Square wave testing control */
-	/* Values from 1511 to 1599 are reserved */
+	/* Value 1511 is reserved */
+	/* Values from 1513 to 1599 are reserved */
 #define MDIO_PMAPMD_PRBSTXERRCNT(x)	     /* PRBS Tx Error Counter */ \
 					(1600 + (x)) /* lane0 to 9 */
 	/* Values from 1610 to 1699 are reserved */
@@ -483,7 +536,17 @@
 #define MDIO_PMAPMD_TSYNC_RXMAXDLYH 1806 /*				  H */
 #define MDIO_PMAPMD_TSYNC_RXMINDLYL 1807 /*		     RX MIN delay L */
 #define MDIO_PMAPMD_TSYNC_RXMINDLYH 1808 /*				  H */
-	/* Values from 1809 to 32767 are reserved */
+	/* Values from 1809 to 1899 are reserved */
+	/* Values from 1959 to 2099 are reserved */
+	/* Value 2101 is reserved */
+	/* Values from 2103 to 2199 are reserved */
+	/* Values from 2207 to 2209 are reserved */
+	/* Values from 2218 to 2245 are reserved */
+	/* Values from 2248 to 2249 are reserved */
+	/* Values from 2270 to 2275 are reserved */
+	/* Values from 2288 to 2293 are reserved */
+	/* Values from 2300 to 2303 are reserved */
+	/* Values from 2318 to 32767 are reserved */
 	/* Values from 32768 to 65535 are vendor specific */
 
 /*
@@ -842,7 +905,8 @@
 
 #define MDIO_AN_MULTGT_ANCTRL2	64  /* MultiGBASE-T AN control 2 */
 #define MDIO_AN_MULTGT_ANSTAT2	65  /* MultiGBASE-T AN status 2 */
-	/* Values from 66 to 32767 are reserved */
+	/* Values from 66 to 511 are reserved */
+	/* Values from 528 to 32767 are reserved */
 	/* Values from 32768 to 65535 are vendor specific */
 
 /*
