@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.34 2026/11/25 14:25:41 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.35 2026/11/25 14:26:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -98,8 +98,11 @@
 #define   PMAPMD_CTRL1_SPEED_40G    (PMAPMD_CTRL1_SPEED_SEL52 | (2 << 2))
 #define   PMAPMD_CTRL1_SPEED_100G   (PMAPMD_CTRL1_SPEED_SEL52 | (3 << 2))
 #define   PMAPMD_CTRL1_SPEED_25G    (PMAPMD_CTRL1_SPEED_SEL52 | (4 << 2))
+#define   PMAPMD_CTRL1_SPEED_50G    (PMAPMD_CTRL1_SPEED_SEL52 | (5 << 2))
 #define   PMAPMD_CTRL1_SPEED_2_5G   (PMAPMD_CTRL1_SPEED_SEL52 | (6 << 2))
 #define   PMAPMD_CTRL1_SPEED_5G     (PMAPMD_CTRL1_SPEED_SEL52 | (7 << 2))
+#define   PMAPMD_CTRL1_SPEED_200G   (PMAPMD_CTRL1_SPEED_SEL52 | (8 << 2))
+#define   PMAPMD_CTRL1_SPEED_400G   (PMAPMD_CTRL1_SPEED_SEL52 | (9 << 2))
 
 #define MDIO_PMAPMD_STAT1	1   /* PMA/PMD status 1 */
 #define MDIO_PMAPMD_DEVID1	2   /* PMA/PMD device identifier 1 */
