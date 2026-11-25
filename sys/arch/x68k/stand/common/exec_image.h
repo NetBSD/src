@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_image.h,v 1.1 2001/09/27 10:14:50 minoura Exp $	*/
+/*	$NetBSD: exec_image.h,v 1.2 2026/11/25 11:01:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto.
@@ -25,5 +25,4 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void exec_image (unsigned int, unsigned int, unsigned int, int, int, int)
-	__attribute__((__noreturn__));
+void exec_image(unsigned int, int, int, int) __attribute__((__noreturn__));

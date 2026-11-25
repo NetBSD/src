@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_image.S,v 1.5 2026/11/25 09:44:14 isaki Exp $	*/
+/*	$NetBSD: exec_image.S,v 1.6 2026/11/25 11:01:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto.
@@ -35,20 +35,20 @@
 	.even
 
 ENTRY_NOPROFILE(exec_image)
-||	void exec_image(loaded,executed,entry,size,bootdev,boothowto)
-||	unsigned int loaded;
-||	unsigned int executed;
+||	void exec_image(entry, size, bootdev, boothowto)
 ||	unsigned int entry;
 ||	int size;
 ||	int bootdev;
 ||	int boothowto;
-	addl		#4,%sp			| throw away the return address
-	moveml		%sp@+,%a4-%a6
-	moveml		%sp@+,%d5-%d7
+	addql		#4,%sp			| throw away the return address
+	moveml		%sp@+,%d4-%d7
+	moval		%d4,%a0			| entry
 
-	movl		%d5,%sp@-		| push last arg (esym)
+	| These three stack parameters are currently not used by secondary
+	| bootloader.  Only for the backward (and future?) compatibility.
+	movel		%d5,%sp@-		| push last arg (esym)
 	movel		SRAM_MEMSIZE,%sp@-	| second arg (physsize)
-	pea		%a5@			| first arg (firstpa)
+	pea		%a0@			| first arg (dummy firstpa)
 
 	movq		#0,%d0			| reg arg (unused)
 	movq		#0,%d1			| reg arg (unused)
@@ -58,7 +58,7 @@ ENTRY_NOPROFILE(exec_image)
 	movq		#0,%d5			| reg arg (unused)
 						| bootdev(%d6) is already set
 						| boothowto(%d7) is already set
-	moval		%a6,%a0			| entry
+						| entry(%a0) is already set
 	moval		%d0,%a1			| reg arg (unused)
 	moval		%d0,%a2			| reg arg (unused)
 	moval		%d0,%a3			| reg arg (unused)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.9 2024/01/07 07:58:34 isaki Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.10 2026/11/25 11:01:38 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -240,10 +240,8 @@ bootmain(void)
 #endif
 	if (fd >= 0) {
 		close(fd);
-		exec_image(BOOT_TEXTADDR, /* image loaded at */
-			   BOOT_TEXTADDR, /* image executed at */
-			   BOOT_TEXTADDR, /* XXX: entry point */
-			   0,		  /* XXX: image size */
+		exec_image(BOOT_TEXTADDR, /* entry point */
+			   0,		  /* image size (not used) */
 			   bootdev, 0);   /* arguments */
 	}
 	IOCS_B_PRINT("can't load the secondary bootstrap.");

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.15 2026/11/25 10:51:48 isaki Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.16 2026/11/25 11:01:37 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -341,10 +341,8 @@ bootufs(void)
 		/* NOTREACHED */
 	}
 
-	exec_image(BOOT_TEXTADDR, /* image loaded at */
-		   BOOT_TEXTADDR, /* image executed at */
-		   header.a_entry, /* entry point */
-		   size, /* image size */
+	exec_image(header.a_entry, /* entry point */
+		   size, /* image size (not used) */
 		   bootdev, RB_SINGLE); /* arguments */
 	/* NOTREACHED */
 }
