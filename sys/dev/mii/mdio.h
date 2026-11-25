@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.35 2026/11/25 14:26:13 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.36 2026/11/25 14:26:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -245,7 +245,7 @@
 #define   PMAPMD_EXTABLTY_10G_LRM	0x0002 /* 10GBASE-LRM */
 #define   PMAPMD_EXTABLTY_10G_CX4	0x0001 /* 10GBASE-CX4 */
 
-#define MDIO_PMAPMD_P2MPABLTY	12  /* P2MP ability */
+#define MDIO_PMAPMD_10G_EPON_EXTABLTY 12  /* 10G-EPON extended ability */
 
 #define MDIO_PMAPMD_40G100GEXTABLTY 13 /* 40G/100G extended ability */
 #define   PMAPMD_40G100GEXTABLTY_40G_T	0x0040 /* 40GBASE-T */
