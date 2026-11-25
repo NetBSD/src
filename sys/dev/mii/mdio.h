@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.30 2026/11/25 14:23:25 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.31 2026/11/25 14:23:50 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
  *   an underscore. For example, use XXX_YYY10G_T instead of XXX_YYY10GT.
  * - Other abbreviations:
  *	ABLTY:	Ability
+ *	BASER:	BASE-R
  *	CAP:	Capability
  *	CTRL:	Control
  *	STAT:	Status
@@ -357,14 +358,14 @@
 					       * status & control
 					       */
 	/* Values 148 to 149 are reserved */
-#define MDIO_PMAPMD_BASERPMDCTRL	150 /* BASE-R PMD control */
-#define MDIO_PMAPMD_BASERPMDSTAT	151 /* BASE-R PMD status */
-#define MDIO_PMAPMD_BASERLPCOEFUPDL0	152 /* BASE-R LP coeffici. update ln0*/
-#define MDIO_PMAPMD_BASERLPSTATRPTL0	153 /* BASE-R LP status report lane0 */
-#define MDIO_PMAPMD_BASERLDCOEFFUPDL0	154 /* BASE-R LD coeffici. update ln0*/
-#define MDIO_PMAPMD_BASERLDSTATRPTL0	155 /* BASE-R LD status report lane0 */
-#define MDIO_PMAPMD_BASERSTAT2		156 /* BASE-R PMD status 2 */
-#define MDIO_PMAPMD_BASERSTAT3		157 /*			 3 */
+#define MDIO_PMAPMD_BASER_PMDCTRL	150 /* BASE-R PMD control */
+#define MDIO_PMAPMD_BASER_PMDSTAT	151 /* BASE-R PMD status */
+#define MDIO_PMAPMD_BASER_LPCOEFUPDL0	152 /* BASE-R LP coeffici. update ln0*/
+#define MDIO_PMAPMD_BASER_LPSTATRPTL0	153 /* BASE-R LP status report lane0 */
+#define MDIO_PMAPMD_BASER_LDCOEFFUPDL0	154 /* BASE-R LD coeffici. update ln0*/
+#define MDIO_PMAPMD_BASER_LDSTATRPTL0	155 /* BASE-R LD status report lane0 */
+#define MDIO_PMAPMD_BASER_STAT2		156 /* BASE-R PMD status 2 */
+#define MDIO_PMAPMD_BASER_STAT3		157 /*			 3 */
 	/* Values 158 to 159 are reserved */
 #define MDIO_PMAPMD_1000KXCTRL		160 /* 1000BASE-KX control */
 #define MDIO_PMAPMD_1000KXSTAT		161 /* 1000BASE-KX status */
@@ -374,12 +375,12 @@
 #define MDIO_PMAPMD_PMAOVHDSTAT1	165 /* PMA Overhead Status 1 */
 #define MDIO_PMAPMD_PMAOVHDSTAT2	166 /*			   2 */
 	/* Values 167 to 169 are reserved */
-#define MDIO_PMAPMD_BASERFECABLTY	170 /* BASE-R FEC ability */
-#define MDIO_PMAPMD_BASERFECCTRL	171 /* BASE-R FEC control */
-#define MDIO_PMAPMD_BASERFECCOBLCNTL	172 /* BASE-R FEC correct. blks cntL */
-#define MDIO_PMAPMD_BASERFECCOBLCNTH	173 /*				cntH */
-#define MDIO_PMAPMD_BASERFECUNCOBLCNTL	174 /* BASE-R FEC uncorr. blks cntL */
-#define MDIO_PMAPMD_BASERFECUNCOBLCNTH	175 /*                         cntH */
+#define MDIO_PMAPMD_BASER_FECABLTY	170 /* BASE-R FEC ability */
+#define MDIO_PMAPMD_BASER_FECCTRL	171 /* BASE-R FEC control */
+#define MDIO_PMAPMD_BASER_FECCOBLCNTL	172 /* BASE-R FEC correct. blks cntL */
+#define MDIO_PMAPMD_BASER_FECCOBLCNTH	173 /*				cntH */
+#define MDIO_PMAPMD_BASER_FECUNCOBLCNTL	174 /* BASE-R FEC uncorr. blks cnt L */
+#define MDIO_PMAPMD_BASER_FECUNCOBLCNTH	175 /*                         cnt H */
 	/* Values 176 to 178 are reserved */
 #define MDIO_PMAPMD_CAUI4C2MRECCTLE	179 /* CAUI-4 C2M recommended CTLE */
 #define MDIO_PMAPMD_CAUI4C2CTERDIL0	180 /* CAUI-4 C2C TxEq RxDir lane 0 */
@@ -414,26 +415,26 @@
 #define MDIO_PMAPMD_RSFECPCSALGNSTAT3	282 /*				   3 */
 #define MDIO_PMAPMD_RSFECPCSALGNSTAT4	283 /*				   4 */
 	/* Values 284 to 299 are reserved */
-#define MDIO_PMAPMD_BASERFECCORBLKCNTL(x)   /* BASE-R FEC Corr. Blk. CntL */ \
+#define MDIO_PMAPMD_BASER_FECCORBLKCNTL(x)  /* BASE-R FEC Corr. Blk. Cnt L */ \
 					(300 + ((x) * 2)) /* lane0 to 19 */
-#define MDIO_PMAPMD_BASERFECCORBLKCNTH(x)   /* BASE-R FEC Corr. Blk. CntH */ \
+#define MDIO_PMAPMD_BASER_FECCORBLKCNTH(x)  /* BASE-R FEC Corr. Blk. Cnt H */ \
 					(301 + ((x) * 2)) /* lane0 to 19 */
 	/* Values 340 to 699 are reserved */
-#define MDIO_PMAPMD_BASERFECUNCORBLKCNTL(x) /* BASE-R FEC UnCorr. Blk. CntL*/ \
+#define MDIO_PMAPMD_BASER_FECUNCORBLKCNTL(x) /* BASE-R FEC UnCorr. Blk. CntL*/ \
 					(700 + ((x) * 2)) /* lane0 to 19 */
-#define MDIO_PMAPMD_BASERFECUNCORBLKCNTH(x) /* BASE-R FEC UnCorr. Blk. CntH*/ \
+#define MDIO_PMAPMD_BASER_FECUNCORBLKCNTH(x) /* BASE-R FEC UnCorr. Blk. CntH*/ \
 					(701 + ((x) * 2)) /* lane0 to 19 */
 	/* Values 740 to 1099 are reserved */
-#define MDIO_PMAPMD_BASERLPCOEFUPD(x)	    /* BASE-R LP coefficient update */\
+#define MDIO_PMAPMD_BASER_LPCOEFUPD(x)	    /* BASE-R LP coefficient update */\
 					(1100 + (x)) /* lane0 to 9 */
 	/* Values 1110 to 1199 are reserved */
-#define MDIO_PMAPMD_BASERLPSTATRPT(x)	    /* BASE-R LP status report */ \
+#define MDIO_PMAPMD_BASER_LPSTATRPT(x)	    /* BASE-R LP status report */ \
 					(1200 + (x)) /* lane0 to 9 */
 	/* Values 1210 to 1299 are reserved */
-#define MDIO_PMAPMD_BASERLDCOEFUPD(x)	    /* BASE-R LD coefficient update */\
+#define MDIO_PMAPMD_BASER_LDCOEFUPD(x)	    /* BASE-R LD coefficient update */\
 					(1300 + (x)) /* lane0 to 9 */
 	/* Values 1310 to 1399 are reserved */
-#define MDIO_PMAPMD_BASERLDSTATRPT(x)	    /* BASE-R LD status report */ \
+#define MDIO_PMAPMD_BASER_LDSTATRPT(x)	    /* BASE-R LD status report */ \
 					(1400 + (x)) /* lane0 to 9 */
 	/* Values 1410 to 1449 are reserved */
 #define MDIO_PMAPMD_PMDTRAINPATTERN(x)	    /* PMD training pattern */	\
@@ -538,8 +539,8 @@
 #define MDIO_PCS_10GXSTAT	24  /* 10G-X PCS status */
 #define MDIO_PCS_10GXSTSCTRL	25  /* 10G-X PCS test control */
 	/* Values 26 to 31 are reserved */
-#define MDIO_PCS_BASERMULTGT_STAT1 32 /* BASE-R & MultiGBASE-T PCS status 1 */
-#define MDIO_PCS_BASERMULTGT_STAT2 33 /*				  2 */
+#define MDIO_PCS_BASER_MULTGT_STAT1 32 /* BASE-R & MultiGBASE-T PCS status 1 */
+#define MDIO_PCS_BASER_MULTGT_STAT2 33 /*				   2 */
 #define MDIO_PCS_BASER_TPSEEDA(x)   /* BASE-R PCS test pattern seed A */ \
 				(34 + (x)) /* 0 to 3 */
 #define MDIO_PCS_BASER_TPSEEDB(x)   /* BASE-R PCS test pattern seed B */ \
