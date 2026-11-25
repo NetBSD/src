@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.24 2026/11/25 14:20:16 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.25 2026/11/25 14:20:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -368,10 +368,10 @@
 	/* Values 167 to 169 are reserved */
 #define MDIO_PMAPMD_BASERFECABLTY	170 /* BASE-R FEC ability */
 #define MDIO_PMAPMD_BASERFECCTRL	171 /* BASE-R FEC control */
-#define MDIO_PMAPMD_10GRFECCOBLCNTL	172 /* 10G-R FEC corrected blks cntL */
-#define MDIO_PMAPMD_10GRFECCOBLCNTH	173 /* 10G-R FEC corrected blks cntH */
-#define MDIO_PMAPMD_10GRFECUNCOBLCNTL	174 /* 10G-R FEC uncorrect blks cntL */
-#define MDIO_PMAPMD_10GRFECUNCOBLCNTH	175 /* 10G-R FEC uncorrect blks cntH */
+#define MDIO_PMAPMD_BASERFECCOBLCNTL	172 /* BASE-R FEC correct. blks cntL */
+#define MDIO_PMAPMD_BASERFECCOBLCNTH	173 /*				cntH */
+#define MDIO_PMAPMD_BASERFECUNCOBLCNTL	174 /* BASE-R FEC uncorr. blks cntL */
+#define MDIO_PMAPMD_BASERFECUNCOBLCNTH	175 /*                         cntH */
 	/* Values 176 to 178 are reserved */
 #define MDIO_PMAPMD_CAUI4C2MRECCTLE	179 /* CAUI-4 C2M recommended CTLE */
 #define MDIO_PMAPMD_CAUI4C2CTERDIL0	180 /* CAUI-4 C2C TxEq RxDir lane 0 */
@@ -532,12 +532,12 @@
 	/* Values 26 to 31 are reserved */
 #define MDIO_PCS_BASERTSTAT1	32  /* BASE-R & 10G-T PCS status 1 */
 #define MDIO_PCS_BASERTSTAT2	33  /*				 2 */
-#define MDIO_PCS_10GRTPSEEDA(x)	    /* 10G-R PCS test pattern seed A */ \
+#define MDIO_PCS_BASER_TPSEEDA(x)   /* BASE-R PCS test pattern seed A */ \
 				(34 + (x)) /* 0 to 3 */
-#define MDIO_PCS_10GRTPSEEDB(x)	    /* 10G-R PCS test pattern seed B */ \
+#define MDIO_PCS_BASER_TPSEEDB(x)   /* BASE-R PCS test pattern seed B */ \
 				(38 + (x)) /* 0 to 3 */
-#define MDIO_PCS_10GRTPCTRL	42  /* 10G-R PCS test pattern control */
-#define MDIO_PCS_10GRTPERRCNT	43  /* 10G-R PCS test pattern error counter */
+#define MDIO_PCS_BASER_TPCTRL	42  /* BASE-R PCS test pattern control */
+#define MDIO_PCS_BASER_TPERRCNT	43  /* BASE-R PCS test pattern error counter */
 #define MDIO_PCS_BERHIORDERCNT	44  /* BER high order counter */
 #define MDIO_PCS_ERRBHIORDERCNT	45  /* Errored blocks high order counter */
 	/* Values 46 to 49 are reserved */
