@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.73 2026/07/26 20:57:28 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.74 2026/11/25 14:09:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -503,6 +503,7 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_2500_T | IFM_FDX,	"2500baseT" },		\
 	{ IFM_ETHER | IFM_5000_T | IFM_FDX,	"5GBASE-T" },		\
 	{ IFM_ETHER | IFM_5000_T | IFM_FDX,	"5GbaseT" },		\
+	{ IFM_ETHER | IFM_5000_T | IFM_FDX,	"5000baseT" },		\
 	{ IFM_ETHER | IFM_OTHER,		"Other" },		\
 	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GbaseLR" },		\
 	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GLR" },		\
@@ -623,6 +624,8 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_100_TX | IFM_FDX,	"100baseTX-FDX" },	\
 	{ IFM_ETHER | IFM_100_TX | IFM_FDX,	"100BASE-TX-FDX" },	\
 	{ IFM_ETHER | IFM_1000_T | IFM_FDX,	"1000baseT-FDX" },	\
+	{ IFM_ETHER | IFM_2500_T | IFM_FDX,	"2500baseT-FDX" },	\
+	{ IFM_ETHER | IFM_5000_T | IFM_FDX,	"5000baseT-FDX" },	\
 									\
 	/*								\
 	 * IEEE 802.11							\
