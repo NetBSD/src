@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.16 2026/11/25 14:15:01 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.17 2026/11/25 14:15:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
  *	CAP:	Capability
  *	CTRL:	Control
  *	STAT:	Status
+ *	MGN:	Margin
  */
 
 /*
@@ -171,7 +172,7 @@
 	/* Values 34 to 35 are reserved */
 #define MDIO_PMAPMD_10P2BLLOSCNT	36  /* 10P/2B link loss counter */
 #define MDIO_PMAPMD_10P2BRXSNRMGN	37  /* 10P/2B RX SNR margin */
-#define MDIO_PMAPMD_10P2BLPRXSNRMG	38  /* 10P/2B LP RX SNR margin */
+#define MDIO_PMAPMD_10P2BLPRXSNRMGN	38  /* 10P/2B LP RX SNR margin */
 #define MDIO_PMAPMD_10P2BLINEATTN	39  /* 10P/2B line attenuation */
 #define MDIO_PMAPMD_10P2BLPLINEATTN	40  /* 10P/2B LP line attenuation */
 #define MDIO_PMAPMD_10P2BLQTHRES	41  /* 10P/2B line quality thresholds*/
@@ -241,14 +242,14 @@
 #define MDIO_PMAPMD_10GTPASWPOLAR	130 /* 10G-T pair swap & polarity */
 #define MDIO_PMAPMD_10GTTXPWBOSHRCH	131 /* 10G-T PWR backoff&PHY shrt rch*/
 #define MDIO_PMAPMD_10GTTSTMODE		132 /* 10G-T test mode */
-#define MDIO_PMAPMD_10GTSNROMARGA	133 /* 10G-T SNR operating margin chA*/
-#define MDIO_PMAPMD_10GTSNROMARGB	134 /* 10G-T SNR operating margin chB*/
-#define MDIO_PMAPMD_10GTSNROMARGC	135 /* 10G-T SNR operating margin chC*/
-#define MDIO_PMAPMD_10GTSNROMARGD	136 /* 10G-T SNR operating margin chD*/
-#define MDIO_PMAPMD_10GTMINMARGA	137 /* 10G-T minimum margin ch. A */
-#define MDIO_PMAPMD_10GTMINMARGB	138 /* 10G-T minimum margin ch. B */
-#define MDIO_PMAPMD_10GTMINMARGC	139 /* 10G-T minimum margin ch. C */
-#define MDIO_PMAPMD_10GTMINMARGD	140 /* 10G-T minimum margin ch. D */
+#define MDIO_PMAPMD_10GTSNROMGNA	133 /* 10G-T SNR operating margin chA*/
+#define MDIO_PMAPMD_10GTSNROMGNB	134 /* 10G-T SNR operating margin chB*/
+#define MDIO_PMAPMD_10GTSNROMGNC	135 /* 10G-T SNR operating margin chC*/
+#define MDIO_PMAPMD_10GTSNROMGND	136 /* 10G-T SNR operating margin chD*/
+#define MDIO_PMAPMD_10GTMINMGNA		137 /* 10G-T minimum margin ch. A */
+#define MDIO_PMAPMD_10GTMINMGNB		138 /* 10G-T minimum margin ch. B */
+#define MDIO_PMAPMD_10GTMINMGNC		139 /* 10G-T minimum margin ch. C */
+#define MDIO_PMAPMD_10GTMINMGND		140 /* 10G-T minimum margin ch. D */
 #define MDIO_PMAPMD_10GTSIGPWRA		141 /* 10G-T RX signal power ch. A */
 #define MDIO_PMAPMD_10GTSIGPWRB		142 /* 10G-T RX signal power ch. B */
 #define MDIO_PMAPMD_10GTSIGPWRC		143 /* 10G-T RX signal power ch. C */
