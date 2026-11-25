@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.116 2026/11/25 13:18:32 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.117 2026/11/25 15:28:25 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.116 2026/11/25 13:18:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.117 2026/11/25 15:28:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -749,6 +749,28 @@ pmap_init_vac(size_t vacsize)
 	pmap_aliasmask = vacsize - 1;
 #endif
 }
+
+/*************************** FORWARD DECLARATIONS ****************************/
+
+#if defined(MULTIPROCESSOR)
+
+struct pmap_message {
+	uint32_t pmsg_cpus;		/* target CPUs */
+	u_int    pmsg_type;		/* message type */
+	union {
+		pmap_t pmsg_pmap;	/* target pmap */
+	};
+};
+
+#define	PMSG_T_UNLOAD		0	/* unload this user pmap */
+
+#define	PMSG_T_user_last	PMSG_T_UNLOAD
+
+static void pmap_message_user_acquire(struct pmap_message *);
+static void pmap_message_user_send(struct pmap_message *);
+static void pmap_message_user_wait(struct pmap_message *);
+
+#endif /* MULTIPROCESSOR */
 
 /***************************** PHYS <-> VM PAGE ******************************/
 
@@ -2095,6 +2117,26 @@ pmap_set_lev1map(pmap_t pmap, struct pmap_table *pt, paddr_t pa)
 	pmap->pm_lev1map = pt;
 	pmap->pm_lev1pa = pa;
 
+#if defined(MULTIPROCESSOR)
+	/*
+	 * We only send an UNLOAD message to remote CPUs when we're
+	 * transitioning to null_segtab; pmap_activate() or pmap_fault()
+	 * will handle the transition from null_segtab when necessary.
+	 */
+	uint32_t others = (pa == null_segtab_pa) ? pmap_cpu_others(pmap) : 0;
+	struct pmap_message pmsg = {
+		.pmsg_cpus = others,
+		.pmsg_type = PMSG_T_UNLOAD,
+		.pmsg_pmap = pmap,
+	};
+
+	if (others) {
+		pmap_message_user_acquire(&pmsg);
+		pmap_message_user_send(&pmsg);
+		/* Do our work in parallel with others. */
+	}
+#endif
+
 	if (pmap == pmap_percpu()->pc_pmap) {
 		/*
 		 * The MMU-specific load-urp functions take care of
@@ -2102,6 +2144,13 @@ pmap_set_lev1map(pmap_t pmap, struct pmap_table *pt, paddr_t pa)
 		 */
 		pmap_load_urp(pmap->pm_lev1pa);
 	}
+
+#if defined(MULTIPROCESSOR)
+	if (others) {
+		/* wait for others to be finished */
+		pmap_message_user_wait(&pmsg);
+	}
+#endif
 }
 
 /*
@@ -2486,6 +2535,74 @@ pmap_table_insert(pmap_t pmap, struct pmap_table *t1, unsigned int stidx,
 
 	return t2;
 }
+
+/************************* INTERPROCESSOR MESSAGING **************************/
+
+#if defined(MULTIPROCESSOR)
+
+/*
+ * User pmap messages can only be sent from thread context, and the
+ * target pmap lock must be held.
+ */
+static struct pmap_message * volatile pmap_user_msgp __cacheline_aligned;
+
+static void
+pmap_message_user_acquire(struct pmap_message *pmsg)
+{
+	KASSERT(pmsg->pmsg_cpus != 0);
+	KASSERT(pmsg->pmsg_type <= PMSG_T_user_last);
+	KASSERT(pmsg->pmsg_pmap != NULL && pmsg->pmsg_pmap != pmap_kernel());
+
+	for (;;) {
+		void *actual = atomic_cas_ptr(&pmap_user_msgp, NULL, pmsg);
+		if (actual == NULL) {
+			return;
+		}
+		/* Spin waiting for it to clear. */
+		while (atomic_load_relaxed(&pmap_user_msgp) != NULL) {
+			__nothing;
+		}
+	}
+}
+
+static void
+pmap_message_user_send(struct pmap_message *pmsg)
+{
+	/* XXX */
+}
+
+static void
+pmap_message_user_wait(struct pmap_message *pmsg)
+{
+	/* Spin waiting for targets to finish. */
+	while (atomic_load_relaxed(&pmsg->pmsg_cpus) != 0) {
+		__nothing;
+	}
+
+	atomic_store_relaxed(&pmap_user_msgp, NULL);
+}
+
+void
+pmap_message_user_process(void)
+{
+	struct pmap_percpu *pc = pmap_percpu();
+	struct pmap_message *pmsg = atomic_load_relaxed(&pmap_user_msgp);
+
+	switch (pmsg->pmsg_type) {
+	case PMSG_T_UNLOAD:
+		if (pmsg->pmsg_pmap == pc->pc_pmap) {
+			pmap_cpu_self_clear(pmsg->pmsg_pmap);
+			pc->pc_pmap = NULL;
+			pmap_load_urp(null_segtab_pa);
+		}
+		break;
+
+	default:
+		panic("%s: unknown type=%u\n", __func__, pmsg->pmsg_type);
+	}
+}
+
+#endif /* MULTIPROCESSOR */
 
 /*************************** PTE LOOKUP FUNCTIONS ****************************/
 
