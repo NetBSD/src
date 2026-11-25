@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.38 2026/11/25 14:27:47 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.39 2026/11/25 14:28:14 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -301,11 +301,11 @@
 #define MDIO_PMAPMD_10P_USRSCONF      56 /* 10P upstream ReedSolomon config */
 #define MDIO_PMAPMD_10P_TONEGROUP1    57 /* 10P tone group 1 */
 #define MDIO_PMAPMD_10P_TONEGROUP2    58 /*		   2 */
-#define MDIO_PMAPMD_10P_TONEPARAM1    59 /* 10P tone parameter 1 */
-#define MDIO_PMAPMD_10P_TONEPARAM2    60 /*		       2 */
-#define MDIO_PMAPMD_10P_TONEPARAM3    61 /*		       3 */
-#define MDIO_PMAPMD_10P_TONEPARAM4    62 /*		       4 */
-#define MDIO_PMAPMD_10P_TONEPARAM5    63 /*		       5 */
+#define MDIO_PMAPMD_10P_TONEPARAM1    59 /* 10P tone control parameter 1 */
+#define MDIO_PMAPMD_10P_TONEPARAM2    60 /*			       2 */
+#define MDIO_PMAPMD_10P_TONEPARAM3    61 /*			       3 */
+#define MDIO_PMAPMD_10P_TONEPARAM4    62 /*			       4 */
+#define MDIO_PMAPMD_10P_TONEPARAM5    63 /*			       5 */
 #define MDIO_PMAPMD_10P_TONECTLACTN   64 /* 10P tone control action */
 #define MDIO_PMAPMD_10P_TONESTAT1     65 /* 10P tone status 1 */
 #define MDIO_PMAPMD_10P_TONESTAT2     66 /*		    2 */
