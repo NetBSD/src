@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.41 2026/11/25 14:29:14 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.42 2026/11/25 14:29:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -807,8 +807,9 @@
 
 #define MDIO_AN_MULTGT_ANSTAT	33  /* MultiGBASE-T AN status */
 	/* Values from 34 to 47 are reserved */
-#define MDIO_AN_BPETHSTAT	48  /* BP Ethernet status */
-	/* Values from 49 to 59 are reserved */
+#define MDIO_AN_BP_BASER_COSTAT	48  /* BP Ethernet BASE-R copper status */
+#define MDIO_AN_BP_BASER_COSTAT2 49 /* BP Ethernet BASE-R copper status 2 */
+	/* Values from 50 to 59 are reserved */
 
 #define MDIO_AN_EEEADVERT	60  /* EEE advertisement 1 */
 #define   AN_EEEADVERT_25G_R	0x4000	/* 25GBASE-R */
