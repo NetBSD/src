@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.39 2026/11/25 14:28:14 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.40 2026/11/25 14:28:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -370,10 +370,10 @@
 #define MDIO_PMAPMD_MINMGNB	       138 /*			     B */
 #define MDIO_PMAPMD_MINMGNC	       139 /*			     C */
 #define MDIO_PMAPMD_MINMGND	       140 /*			     D */
-#define MDIO_PMAPMD_SIGPWRA	       141 /* RX signal power channel A */
-#define MDIO_PMAPMD_SIGPWRB	       142 /*			      B */
-#define MDIO_PMAPMD_SIGPWRC	       143 /*			      C */
-#define MDIO_PMAPMD_SIGPWRD	       144 /*			      D */
+#define MDIO_PMAPMD_RXSIGPWRA	       141 /* RX signal power channel A */
+#define MDIO_PMAPMD_RXSIGPWRB	       142 /*			      B */
+#define MDIO_PMAPMD_RXSIGPWRC	       143 /*			      C */
+#define MDIO_PMAPMD_RXSIGPWRD	       144 /*			      D */
 #define MDIO_PMAPMD_MULTGT_SKEWDLY1    145 /* MultiGBASE-T skew delay 1 */
 #define MDIO_PMAPMD_MULTGT_SKEWDLY2    146 /*			      2 */
 #define MDIO_PMAPMD_MULTGT_FSTRETSTATCTRL 147 /*
