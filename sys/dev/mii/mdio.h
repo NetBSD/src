@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.25 2026/11/25 14:20:52 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.26 2026/11/25 14:21:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -329,10 +329,10 @@
 #define MDIO_PMAPMD_2BEXTPMDPARAM7	108 /*				  7 */
 #define MDIO_PMAPMD_2BEXTPMDPARAM8	109 /*				  8 */
 	/* Values 110 to 128 are reserved */
-#define MDIO_PMAPMD_10GTSTAT		129 /* 10GBASE-T status */
-#define MDIO_PMAPMD_10GTPASWPOLAR	130 /* 10G-T pair swap & polarity */
-#define MDIO_PMAPMD_10GTTXPWBOSHRCH	131 /* 10G-T PWR backoff&PHY shrt rch*/
-#define MDIO_PMAPMD_10GTTSTMODE		132 /* 10G-T test mode */
+#define MDIO_PMAPMD_MULTGTSTAT		129 /* MultiGBASE-T status */
+#define MDIO_PMAPMD_MULTGTPASWPOLAR	130 /* MultiGBASE-T pair swap & polar*/
+#define MDIO_PMAPMD_MULTGTTXPWBOSHRCH	131 /* MultiGBASE-T PWR boff&PHY shrt rch*/
+#define MDIO_PMAPMD_MULTGTTSTMODE	132 /* MultiGBASE-T test mode */
 #define MDIO_PMAPMD_SNROMGNA	       133 /* SNR operating margin chann. A */
 #define MDIO_PMAPMD_SNROMGNB	       134 /*				  B */
 #define MDIO_PMAPMD_SNROMGNC	       135 /*				  C */
@@ -345,9 +345,9 @@
 #define MDIO_PMAPMD_SIGPWRB	       142 /*			      B */
 #define MDIO_PMAPMD_SIGPWRC	       143 /*			      C */
 #define MDIO_PMAPMD_SIGPWRD	       144 /*			      D */
-#define MDIO_PMAPMD_10GTSKEWDLY1	145 /* 10G-T skew delay 1 */
-#define MDIO_PMAPMD_10GTSKEWDLY2	146 /*			2 */
-#define MDIO_PMAPMD_10GTFSTRETSTATCTRL	147 /* 10G-T fast retrain stat&ctrl */
+#define MDIO_PMAPMD_MULTGTSKEWDLY1     145 /* MultiGBASE-T skew delay 1 */
+#define MDIO_PMAPMD_MULTGTSKEWDLY2     146 /*			      2 */
+#define MDIO_PMAPMD_MULTGTFSTRETSTATCTRL 147 /* MultiGBASE-T fast retrain stat&ctrl */
 	/* Values 148 to 149 are reserved */
 #define MDIO_PMAPMD_BASERPMDCTRL	150 /* BASE-R PMD control */
 #define MDIO_PMAPMD_BASERPMDSTAT	151 /* BASE-R PMD status */
