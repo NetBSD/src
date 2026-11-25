@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.39 2026/11/25 06:25:54 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.40 2026/11/25 07:02:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.39 2026/11/25 06:25:54 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.40 2026/11/25 07:02:00 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -189,8 +189,8 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 		FIELDINFO(28, 4, "RAS") {
 			[0] = "Reliability/Availability/Serviceability not supported",
 			[1] = "Reliability/Availability/Serviceability supported",
-			[2] = "Reliability/Availability/Serviceability ARMv8.4 supported",
-			[3] = "Reliability/Availability/Serviceability ARMv8.9 supported (FEAT_RASv2)",
+			[2] = "Reliability/Availability/Serviceability Armv8.4 supported",
+			[3] = "Reliability/Availability/Serviceability Armv8.9 supported (FEAT_RASv2)",
 		},
 	},
 	{
@@ -214,8 +214,8 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 	{
 		FIELDINFO(44, 4, "AMU") {
 			[0] = "Activity Monitors Extension not implemented",
-			[1] = "Activity Monitors Extension v1 ARMv8.4",
-			[2] = "Activity Monitors Extension v1 ARMv8.6",
+			[1] = "Activity Monitors Extension v1 Armv8.4",
+			[2] = "Activity Monitors Extension v1 Armv8.6",
 		},
 	},
 	{
@@ -775,13 +775,13 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 	{
 		FIELDINFO(0, 4, "DebugVer") {
-			[6] = "ARMv8 debug architecture",
-			[7] = "ARMv8 debug architecture "
+			[6] = "Armv8 debug architecture",
+			[7] = "Armv8 debug architecture "
 			      "with Virtualization Host Extensions",
-			[8] = "ARMv8.2 debug architecture",
-			[9] = "ARMv8.4 debug architecture",
-			[10] = "ARMv8.8 debug architecture",
-			[11] = "ARMv8.9 debug architecture",
+			[8] = "Armv8.2 debug architecture",
+			[9] = "Armv8.4 debug architecture",
+			[10] = "Armv8.8 debug architecture",
+			[11] = "Armv8.9 debug architecture",
 		}
 	},
 	{
@@ -794,12 +794,12 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 		FIELDINFO(8, 4, "PMUVer") {
 			[0] = "No Performance monitor",
 			[1] = "Performance monitor unit v3",
-			[4] = "Performance monitor unit v3 for ARMv8.1",
-			[5] = "Performance monitor unit v3 for ARMv8.4",
-			[6] = "Performance monitor unit v3 for ARMv8.5",
-			[7] = "Performance monitor unit v3 for ARMv8.7",
-			[8] = "Performance monitor unit v3 for ARMv8.8",
-			[9] = "Performance monitor unit v3 for ARMv8.9",
+			[4] = "Performance monitor unit v3 for Armv8.1",
+			[5] = "Performance monitor unit v3 for Armv8.4",
+			[6] = "Performance monitor unit v3 for Armv8.5",
+			[7] = "Performance monitor unit v3 for Armv8.7",
+			[8] = "Performance monitor unit v3 for Armv8.8",
+			[9] = "Performance monitor unit v3 for Armv8.9",
 			[15] = "implementation defined"
 		}
 	},
@@ -825,9 +825,9 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 	},
 	{
 		FIELDINFO(40, 4, "TraceFilt") {
-			[0] = "ARMv8.4 Self-hosted Trace Extension not "
+			[0] = "Armv8.4 Self-hosted Trace Extension not "
 			      "implemented",
-			[1] = "ARMv8.4 Self-hosted Trace Extension implemented",
+			[1] = "Armv8.4 Self-hosted Trace Extension implemented",
 		}
 	},
 	{
