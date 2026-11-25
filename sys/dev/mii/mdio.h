@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.21 2026/11/25 14:18:08 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.22 2026/11/25 14:18:56 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -220,13 +220,42 @@
 #define MDIO_PMAPMD_10GSTAT2	8   /* 10G PMA/PMD status 2 */
 #define MDIO_PMAPMD_10GTXDIS	9   /* 10G PMA/PMD transmit disable */
 #define MDIO_PMAPMD_RXSIGDTCT	10  /* 10G PMD receive signal detect */
+
 #define MDIO_PMAPMD_EXTABLTY	11  /* 10G PMA/PMD ext. ability reg */
+#define   PMAPMD_EXTABLTY_BASE_H	0x8000 /* BASE-H */
+#define   PMAPMD_EXTABLTY_2P5G_5G	0x4000 /* 2.5G and 5G */
+#define   PMAPMD_EXTABLTY_2HG_4HG	0x2000 /* 200G and 400G */
+#define   PMAPMD_EXTABLTY_25G		0x1000 /* 25G */
+#define   PMAPMD_EXTABLTY_BASE_T1	0x0800 /* BASE-T1 */
+#define   PMAPMD_EXTABLTY_40G_100G	0x0400 /* 40G and 100G */
+#define   PMAPMD_EXTABLTY_P2MP		0x0200 /* P2MP */
+#define   PMAPMD_EXTABLTY_10_T		0x0100 /* 10BASE-T */
+#define   PMAPMD_EXTABLTY_100_TX	0x0080 /* 100BASE-TX */
+#define   PMAPMD_EXTABLTY_1000_KX	0x0040 /* 1000BASE-KX */
+#define   PMAPMD_EXTABLTY_1000_T	0x0020 /* 1000BASE-T */
+#define   PMAPMD_EXTABLTY_10G_KR	0x0010 /* 10GBASE-KR */
+#define   PMAPMD_EXTABLTY_10G_KX4	0x0008 /* 10GBASE-KX4 */
+#define   PMAPMD_EXTABLTY_10G_T		0x0004 /* 10GBASE-T */
+#define   PMAPMD_EXTABLTY_10G_LRM	0x0002 /* 10GBASE-LRM */
+#define   PMAPMD_EXTABLTY_10G_CX4	0x0001 /* 10GBASE-CX4 */
+
 #define MDIO_PMAPMD_P2MPABLTY	12  /* P2MP ability */
+
 #define MDIO_PMAPMD_40G100GEXTABLTY 13 /* 40G/100G extended ability */
+#define   PMAPMD_40G100GEXTABLTY_40G_T	0x0040 /* 40GBASE-T */
+
 #define MDIO_PMAPMD_PKGID1	14  /* PMA/PMD package identifier 1 */
 #define MDIO_PMAPMD_PKGID2	15  /*				  2 */
 #define MDIO_PMAPMD_EEECAP	16  /* PMA/PMD EEE capability */
-	/* Values 17 to 29 are reserved */
+	/* Values 17 to 20 are reserved */
+
+#define MDIO_PMAPMD_2P5G5GABLTY	21  /* 2.5G/5G PMA/PMD extended ability */
+#define   PMAPMD_2P5G5GABLTY_5G_KR	0x0008
+#define   PMAPMD_2P5G5GABLTY_2P5G_KX	0x0004
+#define   PMAPMD_2P5G5GABLTY_5G_T	0x0002
+#define   PMAPMD_2P5G5GABLTY_2P5G_T	0x0001
+
+	/* Values 22 to 29 are reserved */
 #define MDIO_PMAPMD_10P2BCTRL	30  /* 10P/2B PMA/PMD control */
 #define MDIO_PMAPMD_10P2BSTAT	31  /* 10P/2B	      status */
 #define MDIO_PMAPMD_10P2BLPCTRL	32  /* 10P/2B LP PMA/PMD control */
@@ -689,7 +718,14 @@
 	/* Values 7 to 13 are reserved */
 #define MDIO_AN_PKGID1		14  /* AN package identifier 1 */
 #define MDIO_AN_PKGID2		15  /*			     2 */
+
 #define MDIO_AN_ADVERT1		16  /* AN advertisement 1 */
+#define   AN_ADVERT1_NP		0x8000  /* Next Page */
+#define   AN_ADVERT1_ACK	0x4000  /* Ack. */
+#define   AN_ADVERT1_RF		0x2000  /* Remote Fault */
+#define   AN_ADVERT1_TA		0x1fe0  /* Technology Ability (28.2.1.2(28B.2)) */
+#define   AN_ADVERT1_SELECT	0x001f  /* Selector (73.6(28A)) */
+
 #define MDIO_AN_ADVERT2		17  /* AN advertisement 2 */
 #define MDIO_AN_ADVERT3		18  /*			3 */
 #define MDIO_AN_LPBPABLTY1	19  /* AN LP base page ability 1 */
@@ -702,8 +738,42 @@
 #define MDIO_AN_LPXNPABLTY2	26  /*			 2 */
 #define MDIO_AN_LPXNPABLTY3	27  /*			 3 */
 	/* Values 28 to 31 are reserved */
-#define MDIO_AN_10GTANCTRL	32  /* 10G-T AN control */
-#define MDIO_AN_10GTANSTAT	33  /* 10G-T AN status */
+
+#define MDIO_AN_MULTGT_ANCTRL	32  /* MultiGBASE-T AN control */
+#define   AN_MULTGT_ANCTRL_MS_MANU	0x8000 /* MASTER-SLAVE manual enable */
+#define   AN_MULTGT_ANCTRL_MASTER	0x4000 /* MASTER-SLAVE config value */
+#define   AN_MULTGT_ANCTRL_MULTIPORT	0x2000 /* Port type */
+#define   AN_MULTGT_ANCTRL_10G_T	0x1000
+#define   AN_MULTGT_ANCTRL_40G_T	0x0800
+#define   AN_MULTGT_ANCTRL_25G_T	0x0400
+#define   AN_MULTGT_ANCTRL_25G_T_FR	0x0200 /* Fast retrain (25G) */
+#define   AN_MULTGT_ANCTRL_5G_T		0x0100
+#define   AN_MULTGT_ANCTRL_2P5G_T	0x0080
+#define   AN_MULTGT_ANCTRL_5G_T_FR	0x0040 /* Fast retrain (5G) */
+#define   AN_MULTGT_ANCTRL_2P5G_T_FR	0x0020 /* Fast retrain (2.5G) */
+				/* Value 0x0010 is reserved */
+#define   AN_MULTGT_ANCTRL_40G_T_FR	0x0008 /* Fast retrain (40G) */
+#define   AN_MULTGT_ANCTRL_10G_T_PRBS	0x0004 /* (deprecated) */
+#define   AN_MULTGT_ANCTRL_10G_T_FR	0x0002 /* Fast retrain (10G) */
+#define   AN_MULTGT_ANCTRL_10G_T_LT	0x0001 /* Loop timing */
+#define   AN_MULTGT_ANCTRL_ABILITIES_2P5G_T				\
+	(AN_MULTGT_ANCTRL_2P5G_T | AN_MULTGT_ANCTRL_2P5G_T_FR)
+#define   AN_MULTGT_ANCTRL_ABILITIES_5G_T				\
+	(AN_MULTGT_ANCTRL_5G_T | AN_MULTGT_ANCTRL_5G_T_FR)
+#define   AN_MULTGT_ANCTRL_ABILITIES_10G_T				\
+	(AN_MULTGT_ANCTRL_10G_T | AN_MULTGT_ANCTRL_10G_T_FR)
+#define   AN_MULTGT_ANCTRL_ABILITIES_25G_T				\
+	(AN_MULTGT_ANCTRL_25G_T | AN_MULTGT_ANCTRL_25G_T_FR)
+#define   AN_MULTGT_ANCTRL_ABILITIES_40G_T				\
+	(AN_MULTGT_ANCTRL_40G_T | AN_MULTGT_ANCTRL_40G_T_FR)
+#define   AN_MULTGT_ANCTRL_ABILITIES_SPEED				\
+	(AN_MULTGT_ANCTRL_ABILITIES_2P5G_T |				\
+	    AN_MULTGT_ANCTRL_ABILITIES_5G_T |				\
+	    AN_MULTGT_ANCTRL_ABILITIES_10G_T |				\
+	    AN_MULTGT_ANCTRL_ABILITIES_25G_T |				\
+	    AN_MULTGT_ANCTRL_ABILITIES_40G_T)
+
+#define MDIO_AN_MULTGT_ANSTAT	33  /* MultiGBASE-T AN status */
 	/* Values 34 to 47 are reserved */
 #define MDIO_AN_BPETHSTAT	48  /* BP Ethernet status */
 	/* Values 49 to 59 are reserved */
