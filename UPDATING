@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.383.2.1 2026/09/13 13:46:28 martin Exp $
+$NetBSD: UPDATING,v 1.383.2.2 2026/11/25 09:14:12 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20261117:
+	Fundamental fixes in the build system for Stack Smashing Protection
+	(ssp) compiler options require a full, clean rebuild of the whole
+	source tree. Remove all object directories (or run build.sh without
+	the -u option).
 
 20260911:
 	zic(8) has been updated, update builds (build.sh -u)
