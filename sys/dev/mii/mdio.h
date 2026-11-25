@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.37 2026/11/25 14:27:10 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.38 2026/11/25 14:27:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -284,7 +284,7 @@
 #define MDIO_PMAPMD_10P2B_LINEATTN    39 /* 10P/2B line attenuation */
 #define MDIO_PMAPMD_10P2B_LPLINEATTN  40 /* 10P/2B LP line attenuation */
 #define MDIO_PMAPMD_10P2B_LQTHRES     41 /* 10P/2B line quality thresholds */
-#define MDIO_PMAPMD_10P2B_LPLQLTHRES  42 /* 10P/2B LP LQ thresholds */
+#define MDIO_PMAPMD_2B_LPLQLTHRES     42 /* 2B LP LQ thresholds */
 #define MDIO_PMAPMD_10P_FECCOERRS     43 /* 10P FEC correctable errors count */
 #define MDIO_PMAPMD_10P_FECUNCOERRS   44 /* 10P FEC uncorrectable err count */
 #define MDIO_PMAPMD_10P_LPFECCOERRS   45 /* 10P LP FEC correctable err count */
