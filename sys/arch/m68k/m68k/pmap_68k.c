@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.113 2026/11/24 21:30:20 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.114 2026/11/25 12:10:53 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.113 2026/11/24 21:30:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.114 2026/11/25 12:10:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,6 +378,8 @@ static int	pmap_mmuclass __read_mostly;
 
 #define	PMAP_EVENT_COUNTERS
 
+/* vvv these are protected by the growkernel lock vvv */
+
 static struct evcnt pmap_nkptpages_initial_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap nkptpages", "initial");
 static struct evcnt pmap_nkptpages_current_ev =
@@ -392,6 +394,15 @@ static struct evcnt pmap_nkstpages_current_ev =
 EVCNT_ATTACH_STATIC(pmap_nkstpages_initial_ev);
 EVCNT_ATTACH_STATIC(pmap_nkstpages_current_ev);
 
+static struct evcnt pmap_maxkva_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "maxkva");
+EVCNT_ATTACH_STATIC(pmap_maxkva_ev);
+static struct evcnt pmap_kvalimit_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "kvalimit");
+EVCNT_ATTACH_STATIC(pmap_kvalimit_ev);
+
+/* ^^^ these are protected by the growkernel lock ^^^ */
+
 static struct evcnt pmap_nptpages_current_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap nptpages", "current");
 static struct evcnt pmap_nptpages_hiwat_ev =
@@ -399,15 +410,14 @@ static struct evcnt pmap_nptpages_hiwat_ev =
 EVCNT_ATTACH_STATIC(pmap_nptpages_current_ev);
 EVCNT_ATTACH_STATIC(pmap_nptpages_hiwat_ev);
 
-static struct evcnt pmap_maxkva_ev =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "maxkva");
-EVCNT_ATTACH_STATIC(pmap_maxkva_ev);
-
-static struct evcnt pmap_kvalimit_ev =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "kvalimit");
-EVCNT_ATTACH_STATIC(pmap_kvalimit_ev);
-
 #ifdef PMAP_EVENT_COUNTERS
+static struct evcnt pmap_ptpage_alloc_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap ptpage", "alloc");
+EVCNT_ATTACH_STATIC(pmap_ptpage_alloc_ev);
+static struct evcnt pmap_ptpage_free_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap ptpage", "free");
+EVCNT_ATTACH_STATIC(pmap_ptpage_free_ev);
+
 static struct evcnt pmap_pv_alloc_wait_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pv_alloc", "wait");
 EVCNT_ATTACH_STATIC(pmap_pv_alloc_wait_ev);
@@ -621,10 +631,30 @@ EVCNT_ATTACH_STATIC(pmap_lev1map_act_miss_ev);
 static struct evcnt pmap_lev1map_fault_null_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap lev1map", "fault null");
 EVCNT_ATTACH_STATIC(pmap_lev1map_fault_null_ev);
+#endif
 
-#define	pmap_evcnt(e)		pmap_ ## e ## _ev.ev_count++
+#if defined(MULTIPROCESSOR)
+#define	pmap_evcnt_impl(e)	atomic_inc_32(&pmap_ ## e ## _ev.ev_count32)
+#define	pmap_evcnt_dec_impl(e)	atomic_dec_32(&pmap_ ## e ## _ev.ev_count32)
+#else
+#define	pmap_evcnt_impl(e)	__asm __volatile("addql %1,%0"		      \
+					: "+m" (pmap_ ## e ## _ev.ev_count32) \
+					: "i" (1))
+#define	pmap_evcnt_dec_impl(e)	__asm __volatile("subql %1,%0"		      \
+					: "+m" (pmap_ ## e ## _ev.ev_count32) \
+					: "i" (1))
+#endif
+#define	pmap_evcnt_set_impl(e, v)					      \
+	atomic_store_relaxed(&pmap_ ## e ## _ev.ev_count32, (v))
+
+#ifdef PMAP_EVENT_COUNTERS
+#define	pmap_evcnt(e)		pmap_evcnt_impl(e)
+#define	pmap_evcnt_dec(e)	pmap_evcnt_dec_impl(e)
+#define	pmap_evcnt_set(e, v)	pmap_evcnt_set_impl((e), (v))
 #else
 #define	pmap_evcnt(e)		__nothing
+#define	pmap_evcnt_dec(e)	__nothing
+#define	pmap_evcnt_set(e, v)	__nothing
 #endif
 
 #if MMU_CONFIG_HP_CLASS
@@ -878,14 +908,13 @@ pmap_ptpage_alloc(pmap_t pmap, bool segtab, bool nowait)
 		LIST_INSERT_HEAD(&ptp->ptp_freelist, pt, pt_freelist);
 	}
 
-#ifdef PMAP_EVENT_COUNTERS
-	pmap_nptpages_current_ev.ev_count32++;
+	pmap_evcnt(ptpage_alloc);
+	pmap_evcnt_impl(nptpages_current);
 	if (pmap_nptpages_current_ev.ev_count32 >
 	    pmap_nptpages_hiwat_ev.ev_count32) {
-		pmap_nptpages_hiwat_ev.ev_count32 =
-		    pmap_nptpages_current_ev.ev_count32;
+		pmap_evcnt_set_impl(nptpages_hiwat,
+		    pmap_nptpages_current_ev.ev_count32);
 	}
-#endif
 
 	return ptp;
  fail:
@@ -904,9 +933,8 @@ pmap_ptpage_free(struct pmap_ptpage *ptp)
 		    UVM_KMF_WIRED);
 	kmem_free(ptp, size);
 
-#ifdef PMAP_EVENT_COUNTERS
-	pmap_nptpages_current_ev.ev_count32--;
-#endif
+	pmap_evcnt(ptpage_free);
+	pmap_evcnt_dec(nptpages_current);
 }
 
 static struct pool pmap_pool;
@@ -4662,7 +4690,7 @@ pmap_growkernel_link_kptpage(vaddr_t va, paddr_t ptp_pa)
 				kernel_stnext_pa = pmap_growkernel_alloc_page();
 				kernel_stnext_endpa =
 				    kernel_stnext_pa + PAGE_SIZE;
-				pmap_nkstpages_current_ev.ev_count++;
+				pmap_evcnt_impl(nkstpages_current);
 			}
 			pmap_growkernel_insert_lev1map(va,
 			    pmap_ste_proto | kernel_stnext_pa);
@@ -4723,7 +4751,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		/* Allocate page and link it into the MMU tree. */
 		ptp_pa = pmap_growkernel_alloc_page();
 		pmap_growkernel_link_kptpage(va, ptp_pa);
-		pmap_nkptpages_current_ev.ev_count++;
+		pmap_evcnt_impl(nkptpages_current);
 
 		/* Map the PT page into the kernel PTE array. */
 		pte_va = (vaddr_t)pmap_kernel_pte(va);
@@ -4733,8 +4761,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	}
  	kernel_virtual_end = new_maxkva;
  done:
-	pmap_maxkva_ev.ev_count32 = new_maxkva;
-	pmap_kvalimit_ev.ev_count32 = kernel_virtual_max;
+	pmap_evcnt_set_impl(maxkva, new_maxkva);
+	pmap_evcnt_set_impl(kvalimit, kernel_virtual_max);
 
 	PMAP_MUTEX_EXIT(&pmap_growkernel_lock);
 
@@ -4770,9 +4798,9 @@ pmap_prefer(vaddr_t hint, vaddr_t *vap, int td)
 		ptrdiff_t diff = (hint - va) & pmap_aliasmask;
 
 		if (diff == 0) {
-			pmap_prefer_nochange_ev.ev_count++;
+			pmap_evcnt(prefer_nochange);
 		} else {
-			pmap_prefer_change_ev.ev_count++;
+			pmap_evcnt(prefer_change);
 			if (__predict_false(td)) {
 				va -= pmap_aliasmask + 1;
 			}
