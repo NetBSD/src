@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.29 2026/11/25 14:22:54 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.30 2026/11/25 14:23:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
  *	STAT:	Status
  *	MGN:	Margin
  *	MULTGT: MultiGBASE-T
+ *	TSYNC:	TimeSync
  */
 
 /*
@@ -449,15 +450,15 @@
 #define MDIO_PMAPMD_PRBSRXERRCNT(x)	     /* PRBS Rx Error Counter */ \
 					(1700 + (x)) /* lane0 to 9 */
 	/* Values 1710 to 1799 are reserved */
-#define MDIO_PMAPMD_TSYNCCAP		1800 /* TimeSync PMA/PMD capability */
-#define MDIO_PMAPMD_TSYNCTXMAXDLYL	1801 /* TimeSync PMAPMD TX MAX dly L */
-#define MDIO_PMAPMD_TSYNCTXMAXDLYH	1802 /*				   H */
-#define MDIO_PMAPMD_TSYNCTXMINDLYL	1803 /*		      TX MIN delay L */
-#define MDIO_PMAPMD_TSYNCTXMINDLYH	1804 /*				   H */
-#define MDIO_PMAPMD_TSYNCRXMAXDLYL	1805 /*		      RX MAX delay L */
-#define MDIO_PMAPMD_TSYNCRXMAXDLYH	1806 /*				   H */
-#define MDIO_PMAPMD_TSYNCRXMINDLYL	1807 /*		      RX MIN delay L */
-#define MDIO_PMAPMD_TSYNCRXMINDLYH	1808 /*				   H */
+#define MDIO_PMAPMD_TSYNC_CAP	    1800 /* TimeSync PMA/PMD capability */
+#define MDIO_PMAPMD_TSYNC_TXMAXDLYL 1801 /* TimeSync PMA/PMD TX MAX delay L */
+#define MDIO_PMAPMD_TSYNC_TXMAXDLYH 1802 /*				  H */
+#define MDIO_PMAPMD_TSYNC_TXMINDLYL 1803 /*		     TX MIN delay L */
+#define MDIO_PMAPMD_TSYNC_TXMINDLYH 1804 /*				  H */
+#define MDIO_PMAPMD_TSYNC_RXMAXDLYL 1805 /*		     RX MAX delay L */
+#define MDIO_PMAPMD_TSYNC_RXMAXDLYH 1806 /*				  H */
+#define MDIO_PMAPMD_TSYNC_RXMINDLYL 1807 /*		     RX MIN delay L */
+#define MDIO_PMAPMD_TSYNC_RXMINDLYH 1808 /*				  H */
 	/* Values 1809 to 32767 are reserved */
 	/* Values 32768 to 65535 are vendor specific */
 
@@ -501,15 +502,15 @@
 #define MDIO_WIS_J0RCV(x)	    /* 10G WIS J0 receive */		      \
 				(72 + ((x) / 2)) /* 0to15. L8=even, H8=odd */
 	/* Values 80 to 1799 are reserved */
-#define MDIO_WIS_TSYNCCAP	1800 /* TimeSync WIS capability */
-#define MDIO_WIS_TSYNCTXMAXDLYL	1801 /* TimeSync WIS TX MAX delay L */
-#define MDIO_WIS_TSYNCTXMAXDLYH	1802 /*				  H */
-#define MDIO_WIS_TSYNCTXMINDLYL	1803 /*			MIN delay L */
-#define MDIO_WIS_TSYNCTXMINDLYH	1804 /*				  H */
-#define MDIO_WIS_TSYNCRXMAXDLYL	1805 /*		     RX MAX delay L */
-#define MDIO_WIS_TSYNCRXMAXDLYH	1806 /*				  H */
-#define MDIO_WIS_TSYNCRXMINDLYL	1807 /*			MIN delay L */
-#define MDIO_WIS_TSYNCRXMINDLYH	1808 /*				  H */
+#define MDIO_WIS_TSYNC_CAP	1800 /* TimeSync WIS capability */
+#define MDIO_WIS_TSYNC_TXMAXDLYL 1801 /* TimeSync WIS TX MAX delay L */
+#define MDIO_WIS_TSYNC_TXMAXDLYH 1802 /*			   H */
+#define MDIO_WIS_TSYNC_TXMINDLYL 1803 /*		 MIN delay L */
+#define MDIO_WIS_TSYNC_TXMINDLYH 1804 /*			   H */
+#define MDIO_WIS_TSYNC_RXMAXDLYL 1805 /*	      RX MAX delay L */
+#define MDIO_WIS_TSYNC_RXMAXDLYH 1806 /*			   H */
+#define MDIO_WIS_TSYNC_RXMINDLYL 1807 /*		 MIN delay L */
+#define MDIO_WIS_TSYNC_RXMINDLYH 1808 /*			   H */
 	/* Values 1809 to 32767 are reserved */
 	/* Values 32768 to 65535 are vendor specific */
 
@@ -583,15 +584,15 @@
 #define MDIO_PCS_PCSLMAP(x)	    /* PCS Lane Mapping */	\
 				(400 + (x)) /* lane 0 to 19 */
 	/* Values 420 to 1799 are reserved */
-#define MDIO_PCS_TSYNCCAP	1800 /* TimeSync PCS capability */
-#define MDIO_PCS_TSYNCTXMAXDLYL	1801 /* TimeSync PCS TX MAX delay L */
-#define MDIO_PCS_TSYNCTXMAXDLYH	1802 /*				  H */
-#define MDIO_PCS_TSYNCTXMINDLYL	1803 /*			MIN delay L */
-#define MDIO_PCS_TSYNCTXMINDLYH	1804 /*				  H */
-#define MDIO_PCS_TSYNCRXMAXDLYL	1805 /*		     RX MAX delay L */
-#define MDIO_PCS_TSYNCRXMAXDLYH	1806 /*				  H */
-#define MDIO_PCS_TSYNCRXMINDLYL	1807 /*			MIN delay L */
-#define MDIO_PCS_TSYNCRXMINDLYH	1808 /*				  H */
+#define MDIO_PCS_TSYNC_CAP	 1800 /* TimeSync PCS capability */
+#define MDIO_PCS_TSYNC_TXMAXDLYL 1801 /* TimeSync PCS TX MAX delay L */
+#define MDIO_PCS_TSYNC_TXMAXDLYH 1802 /*			   H */
+#define MDIO_PCS_TSYNC_TXMINDLYL 1803 /*		 MIN delay L */
+#define MDIO_PCS_TSYNC_TXMINDLYH 1804 /*			   H */
+#define MDIO_PCS_TSYNC_RXMAXDLYL 1805 /*	      RX MAX delay L */
+#define MDIO_PCS_TSYNC_RXMAXDLYH 1806 /*			   H */
+#define MDIO_PCS_TSYNC_RXMINDLYL 1807 /*		 MIN delay L */
+#define MDIO_PCS_TSYNC_RXMINDLYH 1808 /*			   H */
 	/* Values 1809 to 32767 are reserved */
 	/* Values 32768 to 65535 are vendor specific */
 
@@ -619,15 +620,15 @@
 #define MDIO_PHYXS_10GXGXSLNSTAT 24 /* 10G PHY XGXS lane status */
 #define MDIO_PHYXS_10GXGXSTSCTRL 25 /* 10G PHY XGXS test control */
 	/* Values 26 to 1799 are reserved */
-#define MDIO_PHYXS_TSYNCCSP	  1800 /* TimeSync PHY XS capability */
-#define MDIO_PHYXS_TSYNCTXMAXDLYL 1801 /* TimeSync PHY XS TX MAX delay L */
-#define MDIO_PHYXS_TSYNCTXMAXDLYH 1802 /*			       H */
-#define MDIO_PHYXS_TSYNCTXMINDLYL 1803 /*		     MIN delay L */
-#define MDIO_PHYXS_TSYNCTXMINDLYH 1804 /*			       H */
-#define MDIO_PHYXS_TSYNCRXMAXDLYL 1805 /*		  RX MAX delay L */
-#define MDIO_PHYXS_TSYNCRXMAXDLYH 1806 /*			       H */
-#define MDIO_PHYXS_TSYNCRXMINDLYL 1807 /*		     MIN delay L */
-#define MDIO_PHYXS_TSYNCRXMINDLYH 1808 /*			       H */
+#define MDIO_PHYXS_TSYNC_CSP	   1800 /* TimeSync PHY XS capability */
+#define MDIO_PHYXS_TSYNC_TXMAXDLYL 1801 /* TimeSync PHY XS TX MAX delay L */
+#define MDIO_PHYXS_TSYNC_TXMAXDLYH 1802 /*				H */
+#define MDIO_PHYXS_TSYNC_TXMINDLYL 1803 /*		      MIN delay L */
+#define MDIO_PHYXS_TSYNC_TXMINDLYH 1804 /*				H */
+#define MDIO_PHYXS_TSYNC_RXMAXDLYL 1805 /*		   RX MAX delay L */
+#define MDIO_PHYXS_TSYNC_RXMAXDLYH 1806 /*				H */
+#define MDIO_PHYXS_TSYNC_RXMINDLYL 1807 /*		      MIN delay L */
+#define MDIO_PHYXS_TSYNC_RXMINDLYH 1808 /*				H */
 	/* Values 1809 to 32767 are reserved */
 	/* Values 32768 to 65535 are vendor specific */
 
@@ -655,15 +656,15 @@
 #define MDIO_DTEXS_10GXGXSLNSTAT 24 /* 10G DTE XGXS lane status */
 #define MDIO_DTEXS_10GXGXSTSCTRL 25 /* 10G DTE XGXS test control */
 	/* Values 26 to 1799 are reserved */
-#define MDIO_DTEXS_TSYNCCAP	  1800 /* TimeSync DTE XS capability */
-#define MDIO_DTEXS_TSYNCTXMAXDLYL 1801 /* TimeSync DTE XS TX MAX delay L */
-#define MDIO_DTEXS_TSYNCTXMAXDLYH 1802 /* 			       H */
-#define MDIO_DTEXS_TSYNCTXMINDLYL 1803 /*		     MIN delay L */
-#define MDIO_DTEXS_TSYNCTXMINDLYH 1804 /*			       H */
-#define MDIO_DTEXS_TSYNCRXMAXDLYL 1805 /*		  RX MAX delay L */
-#define MDIO_DTEXS_TSYNCRXMAXDLYH 1806 /*			       H */
-#define MDIO_DTEXS_TSYNCRXMINDLYL 1807 /*		     MIN delay L */
-#define MDIO_DTEXS_TSYNCRXMINDLYH 1808 /*			       H */
+#define MDIO_DTEXS_TSYNC_CAP	   1800 /* TimeSync DTE XS capability */
+#define MDIO_DTEXS_TSYNC_TXMAXDLYL 1801 /* TimeSync DTE XS TX MAX delay L */
+#define MDIO_DTEXS_TSYNC_TXMAXDLYH 1802 /*				H */
+#define MDIO_DTEXS_TSYNC_TXMINDLYL 1803 /*		      MIN delay L */
+#define MDIO_DTEXS_TSYNC_TXMINDLYH 1804 /*				H */
+#define MDIO_DTEXS_TSYNC_RXMAXDLYL 1805 /*		   RX MAX delay L */
+#define MDIO_DTEXS_TSYNC_RXMAXDLYH 1806 /*				H */
+#define MDIO_DTEXS_TSYNC_RXMINDLYL 1807 /*		      MIN delay L */
+#define MDIO_DTEXS_TSYNC_RXMINDLYH 1808 /*				H */
 	/* Values 1809 to 32767 are reserved */
 	/* Values 32768 to 65535 are vendor specific */
 
@@ -694,15 +695,15 @@
 #define MDIO_TC_10P2B_TPSCOVIOCNT2 26 /*				   2 */
 #define MDIO_TC_10P2B_INDIC	   27 /* 10P/2B TC indications */
 	/* Values 28 to 1799 are reserved */
-#define MDIO_TC_TSYNCCAP	1800 /* TimeSync TC capability */
-#define MDIO_TC_TSYNCTXMAXDLYL	1801 /* TimeSync TC TX MAX delay L */
-#define MDIO_TC_TSYNCTXMAXDLYH	1802 /*				 H */
-#define MDIO_TC_TSYNCTXMINDLYL	1803 /*		       MIN delay L */
-#define MDIO_TC_TSYNCTXMINDLYH	1804 /*				 H */
-#define MDIO_TC_TSYNCRXMAXDLYL	1805 /*		    RX MAX delay L */
-#define MDIO_TC_TSYNCRXMAXDLYH	1806 /*				 H */
-#define MDIO_TC_TSYNCRXMINDLYL	1807 /*		       MIN delay L */
-#define MDIO_TC_TSYNCRXMINDLYH	1808 /*				 H */
+#define MDIO_TC_TSYNC_CAP	1800 /* TimeSync TC capability */
+#define MDIO_TC_TSYNC_TXMAXDLYL	1801 /* TimeSync TC TX MAX delay L */
+#define MDIO_TC_TSYNC_TXMAXDLYH	1802 /*				 H */
+#define MDIO_TC_TSYNC_TXMINDLYL	1803 /*		       MIN delay L */
+#define MDIO_TC_TSYNC_TXMINDLYH	1804 /*				 H */
+#define MDIO_TC_TSYNC_RXMAXDLYL	1805 /*		    RX MAX delay L */
+#define MDIO_TC_TSYNC_RXMAXDLYH	1806 /*				 H */
+#define MDIO_TC_TSYNC_RXMINDLYL	1807 /*		       MIN delay L */
+#define MDIO_TC_TSYNC_RXMINDLYH	1808 /*				 H */
 	/* Values 1809 to 32767 are reserved */
 	/* Values 32768 to 65535 are vendor specific */
 
