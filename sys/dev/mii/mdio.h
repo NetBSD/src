@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.14 2026/11/25 14:13:26 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.15 2026/11/25 14:14:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,18 @@
  * IEEE 802.3 Clause 45 definitions.
  * From:
  *	IEEE 802.3-2022
+ *
+ * Naming policy for macro names:
+ *
+ * - When using abbreviated names, basically follow the guidelines in IEEE
+ *   802.3 1.5 "Abbreviations".
+ * - If a macro name ends with both speed and media type, separate them with
+ *   an underscore. For example, use XXX_YYY10G_T instead of XXX_YYY10GT.
+ * - Other abbreviations:
+ *	ABLTY:	Ability
+ *	CAP:	Capability
+ *	CTRL:	Control
+ *	STAT:	Status
  */
 
 /*
