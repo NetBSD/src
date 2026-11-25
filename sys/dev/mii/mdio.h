@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.22 2026/11/25 14:18:56 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.23 2026/11/25 14:19:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -777,11 +777,14 @@
 	/* Values 34 to 47 are reserved */
 #define MDIO_AN_BPETHSTAT	48  /* BP Ethernet status */
 	/* Values 49 to 59 are reserved */
-#define MDIO_AN_EEEADVERT	60  /* EEE advertisement */
+
+#define MDIO_AN_EEEADVERT	60  /* EEE advertisement 1 */
+#define   AN_EEEADVERT_25G_R	0x4000	/* 25GBASE-R */
 #define   AN_EEEADVERT_100G_CR4	0x2000	/* 100GBASE-CR4 */
 #define   AN_EEEADVERT_100G_KR4	0x1000	/* 100GBASE-KR4 */
 #define   AN_EEEADVERT_100G_KP4	0x0800	/* 100GBASE-KP4 */
 #define   AN_EEEADVERT_100G_CR10 0x0400	/* 100GBASE-CR10 */
+#define   AN_EEEADVERT_40G_T	0x0200	/* 40GBASE-T */
 #define   AN_EEEADVERT_40G_CR4	0x0100	/* 40GBASE-CR4 */
 #define   AN_EEEADVERT_40G_KR4	0x0080	/* 40GBASE-KR4 */
 #define   AN_EEEADVERT_10G_KR	0x0040	/* 10GBASE-KR */
@@ -790,11 +793,23 @@
 #define   AN_EEEADVERT_10G_T	0x0008	/* 10GBASE-T */
 #define   AN_EEEADVERT_1000_T	0x0004	/* 1000BASE-T */
 #define   AN_EEEADVERT_100_TX	0x0002	/* 100BASE-TX */
+#define   AN_EEEADVERT_25G_T	0x0001	/* 25GBASE-T */
 
-#define MDIO_AN_EEELPABLTY	61  /* EEE LP ability */
+#define MDIO_AN_EEELPABLTY	61  /* EEE LP ability 1 */
 	/* bitmap is the same as MDIO_AN_EEEADVERT(7.60) */
 
-	/* Values 62 to 32767 are reserved */
+#define MDIO_AN_EEEADVERT2	62  /* EEE advertisement 2 */
+#define   AN_EEEADVERT2_5G_KR	0x0008
+#define   AN_EEEADVERT2_2P5G_KX	0x0004
+#define   AN_EEEADVERT2_5G_T	0x0002
+#define   AN_EEEADVERT2_2P5G_T	0x0001
+
+#define MDIO_AN_EEELPABLTY2	63  /* EEE LP ability 2 */
+	/* Bitmap is the same as MDIO_AN_EEEADVERT2(7.61). */
+
+#define MDIO_AN_MULTGTANCTRL2	64  /* MultiGBASE-T AN control 2 */
+#define MDIO_AN_MULTGTANSTAT2	65  /* MultiGBASE-T AN status 2 */
+	/* Values 66 to 32767 are reserved */
 	/* Values 32768 to 65535 are vendor specific */
 
 /*
