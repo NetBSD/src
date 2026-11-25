@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.48 2026/11/25 14:32:44 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.49 2026/11/25 14:33:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -73,8 +73,8 @@
 #define MDIO_MMD_OFDM_PMAPMD	12
 #define MDIO_MMD_PU		13
 #define MDIO_MMD_CL22EXT	29
-#define MDIO_MMD_VNDSP1		30
-#define MDIO_MMD_VNDSP2		31
+#define MDIO_MMD_VND1		30
+#define MDIO_MMD_VND2		31
 
 /*
  * PMA/PMD registers.
@@ -945,13 +945,13 @@
  * Table 45-422
  */
 	/* Values from 0 to 1 are vendor specific */
-#define MDIO_VSMMD1_DEVID1	2   /* Vendor specific MMD 1 device ident. 1 */
-#define MDIO_VSMMD1_DEVID2	3   /*					   2 */
+#define MDIO_VND1_DEVID1	2   /* Vendor specific MMD 1 device ident. 1 */
+#define MDIO_VND1_DEVID2	3   /*					   2 */
 	/* Values from 4 to 7 are vendor specific */
-#define MDIO_VSMMD1_STAT	8   /* Vendor specific MMD 1 status */
+#define MDIO_VND1_STAT	8   /* Vendor specific MMD 1 status */
 	/* Values from 9 to 13 are vendor specific */
-#define MDIO_VSMMD1_PKGID1	14  /* Vendor specific MMD 1 package ident 1 */
-#define MDIO_VSMMD1_PKGID2	15  /*					   2 */
+#define MDIO_VND1_PKGID1	14  /* Vendor specific MMD 1 package ident 1 */
+#define MDIO_VND1_PKGID2	15  /*					   2 */
 	/* Values from 16 to 65535 are vendor specific */
 
 /*
@@ -959,13 +959,13 @@
  * Table 45-424
  */
 	/* Values from 0 to 1 are vendor specific */
-#define MDIO_VSMMD2_DEVID1	2   /* Vendor specific MMD 2 device ident. 1 */
-#define MDIO_VSMMD2_DEVID2	3   /*					   2 */
+#define MDIO_VND2_DEVID1	2   /* Vendor specific MMD 2 device ident. 1 */
+#define MDIO_VND2_DEVID2	3   /*					   2 */
 	/* Values from 4 to 7 are vendor specific */
-#define MDIO_VSMMD2_STAT	8   /* Vendor specific MMD 2 status */
+#define MDIO_VND2_STAT	8   /* Vendor specific MMD 2 status */
 	/* Values from 9 to 13 are vendor specific */
-#define MDIO_VSMMD2_PKGID1	14  /* Vendor specific MMD 2 package ident 1 */
-#define MDIO_VSMMD2_PKGID2	15  /*					   2 */
+#define MDIO_VND2_PKGID1	14  /* Vendor specific MMD 2 package ident 1 */
+#define MDIO_VND2_PKGID2	15  /*					   2 */
 	/* Values from 16 to 65535 are vendor specific */
 
 #endif /* _DEV_MII_MDIO_H_ */
