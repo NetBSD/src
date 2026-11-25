@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.43 2026/11/25 14:30:17 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.44 2026/11/25 14:30:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -264,13 +264,13 @@
 #define   PMAPMD_2P5G5GABLTY_5G_T	0x0002
 #define   PMAPMD_2P5G5GABLTY_2P5G_T	0x0001
 
-#define MDIO_PMAPMD_BASE_H	  22 /* BASE-H PMA/PMD ext. ability */
-#define MDIO_PMAPMD_200G	  23 /* 200G PMA/PMD ext. ability */
-#define MDIO_PMAPMD_400G	  24 /* 400G PMA/PMD ext. ability */
+#define MDIO_PMAPMD_BASE_H	  22 /* BASE-H PMA/PMD extended ability */
+#define MDIO_PMAPMD_200G	  23 /* 200G PMA/PMD extended ability */
+#define MDIO_PMAPMD_400G	  24 /* 400G PMA/PMD extended ability */
 #define MDIO_PMAPMD_EXTABLTY2	  25 /* PMA/PMD extended ability 2 */
-#define MDIO_PMAPMD_40_100_EXA2	  26 /* 40G/100G ext. ability 2 */
-#define MDIO_PMAPMD_TXDIS_EXT	  27 /* PMD transmit disable ext. */
-#define MDIO_PMAPMD_RXSIGDTCT_EXT 28 /* PMD receive signal detect ext */
+#define MDIO_PMAPMD_40_100_EXA2	  26 /* 40G/100G extended ability 2 */
+#define MDIO_PMAPMD_TXDIS_EXT	  27 /* PMD transmit disable extension */
+#define MDIO_PMAPMD_RXSIGDTCT_EXT 28 /* PMD receive signal detect ext. */
 #define MDIO_PMAPMD_CTRL3	  29 /* PMA/PMD control 3 */
 #define MDIO_PMAPMD_10P2B_CTRL	  30 /* 10P/2B PMA/PMD control */
 #define MDIO_PMAPMD_10P2B_STAT	  31 /* 10P/2B	       status */
