@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.28 2026/11/25 14:22:29 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.29 2026/11/25 14:22:54 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
  *	CTRL:	Control
  *	STAT:	Status
  *	MGN:	Margin
+ *	MULTGT: MultiGBASE-T
  */
 
 /*
@@ -329,10 +330,13 @@
 #define MDIO_PMAPMD_2B_EXTPMDPARAM7   108 /*				7 */
 #define MDIO_PMAPMD_2B_EXTPMDPARAM8   109 /*				8 */
 	/* Values 110 to 128 are reserved */
-#define MDIO_PMAPMD_MULTGTSTAT		129 /* MultiGBASE-T status */
-#define MDIO_PMAPMD_MULTGTPASWPOLAR	130 /* MultiGBASE-T pair swap & polar*/
-#define MDIO_PMAPMD_MULTGTTXPWBOSHRCH	131 /* MultiGBASE-T PWR boff&PHY shrt rch*/
-#define MDIO_PMAPMD_MULTGTTSTMODE	132 /* MultiGBASE-T test mode */
+#define MDIO_PMAPMD_MULTGT_STAT	       129 /* MultiGBASE-T status */
+#define MDIO_PMAPMD_MULTGT_PASWPOLAR   130 /* MultiGBASE-T pair swap & polar */
+#define MDIO_PMAPMD_MULTGT_TXPWBOSHRCH 131 /*
+					    * MultiGBASE-T power backoff and
+					    * PHY short reach setting
+					    */
+#define MDIO_PMAPMD_MULTGT_TSTMODE     132 /* MultiGBASE-T test mode */
 #define MDIO_PMAPMD_SNROMGNA	       133 /* SNR operating margin chann. A */
 #define MDIO_PMAPMD_SNROMGNB	       134 /*				  B */
 #define MDIO_PMAPMD_SNROMGNC	       135 /*				  C */
@@ -345,9 +349,12 @@
 #define MDIO_PMAPMD_SIGPWRB	       142 /*			      B */
 #define MDIO_PMAPMD_SIGPWRC	       143 /*			      C */
 #define MDIO_PMAPMD_SIGPWRD	       144 /*			      D */
-#define MDIO_PMAPMD_MULTGTSKEWDLY1     145 /* MultiGBASE-T skew delay 1 */
-#define MDIO_PMAPMD_MULTGTSKEWDLY2     146 /*			      2 */
-#define MDIO_PMAPMD_MULTGTFSTRETSTATCTRL 147 /* MultiGBASE-T fast retrain stat&ctrl */
+#define MDIO_PMAPMD_MULTGT_SKEWDLY1    145 /* MultiGBASE-T skew delay 1 */
+#define MDIO_PMAPMD_MULTGT_SKEWDLY2    146 /*			      2 */
+#define MDIO_PMAPMD_MULTGT_FSTRETSTATCTRL 147 /*
+					       * MultiGBASE-T fast retrain
+					       * status & control
+					       */
 	/* Values 148 to 149 are reserved */
 #define MDIO_PMAPMD_BASERPMDCTRL	150 /* BASE-R PMD control */
 #define MDIO_PMAPMD_BASERPMDSTAT	151 /* BASE-R PMD status */
@@ -530,8 +537,8 @@
 #define MDIO_PCS_10GXSTAT	24  /* 10G-X PCS status */
 #define MDIO_PCS_10GXSTSCTRL	25  /* 10G-X PCS test control */
 	/* Values 26 to 31 are reserved */
-#define MDIO_PCS_BASERMULTGTSTAT1 32 /* BASE-R & MultiGBASE-T PCS status 1 */
-#define MDIO_PCS_BASERMULTGTSTAT2 33 /*					 2 */
+#define MDIO_PCS_BASERMULTGT_STAT1 32 /* BASE-R & MultiGBASE-T PCS status 1 */
+#define MDIO_PCS_BASERMULTGT_STAT2 33 /*				  2 */
 #define MDIO_PCS_BASER_TPSEEDA(x)   /* BASE-R PCS test pattern seed A */ \
 				(34 + (x)) /* 0 to 3 */
 #define MDIO_PCS_BASER_TPSEEDB(x)   /* BASE-R PCS test pattern seed B */ \
@@ -807,8 +814,8 @@
 #define MDIO_AN_EEELPABLTY2	63  /* EEE LP ability 2 */
 	/* Bitmap is the same as MDIO_AN_EEEADVERT2(7.61). */
 
-#define MDIO_AN_MULTGTANCTRL2	64  /* MultiGBASE-T AN control 2 */
-#define MDIO_AN_MULTGTANSTAT2	65  /* MultiGBASE-T AN status 2 */
+#define MDIO_AN_MULTGT_ANCTRL2	64  /* MultiGBASE-T AN control 2 */
+#define MDIO_AN_MULTGT_ANSTAT2	65  /* MultiGBASE-T AN status 2 */
 	/* Values 66 to 32767 are reserved */
 	/* Values 32768 to 65535 are vendor specific */
 
