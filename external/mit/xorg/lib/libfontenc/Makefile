@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2026/07/12 00:10:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2026/11/25 18:30:36 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ LIBDPLIBS+=	z ${NETBSDSRCDIR}/lib/libz
 
 PKGCONFIG=	fontenc
 PKGCONFIG_SED_FLAGS= \
-	-e "s,@Z_REQUIRES@,-lz,"
+	-e "s,@Z_REQUIRES@,zlib,"
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
