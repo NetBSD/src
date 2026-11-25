@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.157 2026/10/02 14:07:57 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.158 2026/11/25 01:43:03 kre Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.157 2026/10/02 14:07:57 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.158 2026/11/25 01:43:03 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -2517,8 +2517,8 @@ timesub(const time_t *timep, int_fast32_t offset,
 			+ ((y % DAYSPERWEEK - TM_YEAR_BASE % DAYSPERWEEK)
 			   % DAYSPERWEEK
 			   * (DAYSPERNYEAR % DAYSPERWEEK))
-			+ leaps_thru_end_of(y - 1)
-			- leaps_thru_end_of(TM_YEAR_BASE - 1)
+			+ leaps_thru_end_of(y - 1) % DAYSPERWEEK
+			- leaps_thru_end_of(TM_YEAR_BASE - 1) % DAYSPERWEEK
 			+ idays);
 	tmp->tm_wday %= DAYSPERWEEK;
 	if (tmp->tm_wday < 0)
