@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.46 2026/11/25 14:31:51 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.47 2026/11/25 14:32:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
  * - If a macro name ends with both speed and media type, separate them with
  *   an underscore. For example, use XXX_YYY10G_T instead of XXX_YYY10GT.
  * - Other abbreviations:
+ *	2P5G:	2.5G
  *	ABLTY:	Ability
  *	BASER:	BASE-R
  *	CAP:	Capability
@@ -99,7 +100,7 @@
 #define   PMAPMD_CTRL1_SPEED_100G   (PMAPMD_CTRL1_SPEED_SEL52 | (3 << 2))
 #define   PMAPMD_CTRL1_SPEED_25G    (PMAPMD_CTRL1_SPEED_SEL52 | (4 << 2))
 #define   PMAPMD_CTRL1_SPEED_50G    (PMAPMD_CTRL1_SPEED_SEL52 | (5 << 2))
-#define   PMAPMD_CTRL1_SPEED_2_5G   (PMAPMD_CTRL1_SPEED_SEL52 | (6 << 2))
+#define   PMAPMD_CTRL1_SPEED_2P5G   (PMAPMD_CTRL1_SPEED_SEL52 | (6 << 2))
 #define   PMAPMD_CTRL1_SPEED_5G     (PMAPMD_CTRL1_SPEED_SEL52 | (7 << 2))
 #define   PMAPMD_CTRL1_SPEED_200G   (PMAPMD_CTRL1_SPEED_SEL52 | (8 << 2))
 #define   PMAPMD_CTRL1_SPEED_400G   (PMAPMD_CTRL1_SPEED_SEL52 | (9 << 2))
@@ -164,7 +165,7 @@
 #define   PMAPMD_CTRL2_TYPE_50G_KR	0x40
 #define   PMAPMD_CTRL2_TYPE_BASE_T1	0x3d	/* See 1.2100.3:0 */
 #define   PMAPMD_CTRL2_TYPE_5G_KR	0x3c
-#define   PMAPMD_CTRL2_TYPE_2_5G_KX	0x3b
+#define   PMAPMD_CTRL2_TYPE_2P5G_KX	0x3b
 #define   PMAPMD_CTRL2_TYPE_25G_SR	0x3a
 #define   PMAPMD_CTRL2_TYPE_25G_KR	0x39	/* 25G-KR or 25G-KR-S */
 #define   PMAPMD_CTRL2_TYPE_25G_CR	0x38	/* 25G-CR or 25G-CR-S */
@@ -175,7 +176,7 @@
 #define   PMAPMD_CTRL2_TYPE_10GPASS_XR_U 0x33
 #define   PMAPMD_CTRL2_TYPE_10GPASS_XR_D 0x32
 #define   PMAPMD_CTRL2_TYPE_5G_T	0x31
-#define   PMAPMD_CTRL2_TYPE_2_5G_T	0x30
+#define   PMAPMD_CTRL2_TYPE_2P5G_T	0x30
 #define   PMAPMD_CTRL2_TYPE_100G_SR4	0x2f
 #define   PMAPMD_CTRL2_TYPE_100G_CR4	0x2e
 #define   PMAPMD_CTRL2_TYPE_100G_KR4	0x2d
