@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.40 2026/11/25 14:28:45 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.41 2026/11/25 14:29:14 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -390,8 +390,8 @@
 #define MDIO_PMAPMD_BASER_STAT2		156 /* BASE-R PMD status 2 */
 #define MDIO_PMAPMD_BASER_STAT3		157 /*			 3 */
 	/* Values from 158 to 159 are reserved */
-#define MDIO_PMAPMD_1000KXCTRL		160 /* 1000BASE-KX control */
-#define MDIO_PMAPMD_1000KXSTAT		161 /* 1000BASE-KX status */
+#define MDIO_PMAPMD_1000KXCTRL		160 /* 1000BASE-KX/2.5GBASE-KX ctrl */
+#define MDIO_PMAPMD_1000KXSTAT		161 /* 1000BASE-KX/2.5GBASE-KX stat */
 #define MDIO_PMAPMD_PMAOVHDCTRL1	162 /* PMA Overhead Control 1 */
 #define MDIO_PMAPMD_PMAOVHDCTRL2	163 /*			    2 */
 #define MDIO_PMAPMD_PMAOVHDCTRL3	164 /*			    3 */
