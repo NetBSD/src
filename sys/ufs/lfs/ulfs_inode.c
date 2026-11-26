@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.26 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.27 2026/11/26 23:29:10 perseant Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.26 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.27 2026/11/26 23:29:10 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -118,7 +118,7 @@ ulfs_inactive(void *v)
 	}
 
 	if (ip->i_state & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
-		lfs_update(vp, NULL, NULL, 0);
+		lfs_update(vp, NULL, NULL, UPDATE_CLOSE);
 	}
 
 out:
@@ -138,11 +138,6 @@ int
 ulfs_reclaim(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
-
-	/* XXX: do we really need two of these? */
-	/* note: originally the first was inside a wapbl txn */
-	lfs_update(vp, NULL, NULL, UPDATE_CLOSE);
-	lfs_update(vp, NULL, NULL, UPDATE_CLOSE);
 
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
