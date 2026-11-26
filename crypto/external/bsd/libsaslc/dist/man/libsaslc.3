@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.22 2026/11/26 14:59:04 riastradh Exp $
+.\"	$NetBSD: libsaslc.3,v 1.23 2026/11/26 19:35:09 uwe Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -357,42 +357,51 @@ Return the error message associated with the session.
 Never returns
 .Dv NULL .
 .El
+.
 .Ss Configuration
 .
 The library uses three types of dictionaries: session, context (or
 global), and mechanism, and they are searched in that order by
-.Fn saslc_getprop
+.Fn saslc_sess_getprop
 and the first matching entry is taken.
 The context and mechanism dictionaries are loaded from configuration
-files, while the session dictionary is loaded by the caller via
-.Fn saslc_setprop .
+files, while the session dictionary is populated by the caller via
+calls to
+.Fn saslc_sess_setprop .
 .Pp
 The configuration file
-.Pa <cfgpath>/<appname>/saslc.conf
+.Sm off
+.Ao Ar cfgpath Ac Pa / Ao Ar appname Ac Pa /saslc.conf
+.Sm on
 is used for the context configuration.
 The
-.Pa <cfgpath>/<appname>/mech/<mechanism>.conf
+.Sm off
+.Ao Ar cfgpath Ac Pa / Ao Ar appname Ac Pa /mech/ Ao Ar mechanism Ac Pa .conf
+.Sm on
 file is used for the mechanism configuration.
+.Pp
 The
-.Pa <cfgpath>
+.Ar cfgpath
 is
 .Pa /etc/saslc.d
 by default, but this may be overridden by the environment variable
 .Ev SASLC_CONFIG ,
 which in turn may be overridden by
 .Fn saslc_init .
+.Pp
 The
-.Pa <appname>
+.Ar appname
 is
 .Pa saslc
 by default, but may also be overridden by
 .Fn saslc_init .
+.Pp
 Finally, the
-.Pa <mechanism>
+.Ar mechanism
 is the mechanism in use by the session as returned by
 .Fn saslc_sess_getmech .
 Note that this name is case sensitive.
-The currently supported mechanisms are
+The currently supported mechanisms are:
 .Bl -tag -width DIGEST-MD5 -offset indent
 .It ANONYMOUS
 See RFC 2245 and RFC 4505.
@@ -415,37 +424,29 @@ If any of the mechanism files are missing they are silently ignored,
 unless debugging is enabled.
 .Pp
 The configuration files consists of lines of the form:
-.Bd -literal -offset indent
-\fB#\fP comment line
-.Ao key Ac \~\~ Ao value Ac \~\~ Bo \fB#\fP comment Bc
-.Ed
+.Pp
+.Dl Ic # Li comment line
+.Dl Ao Ar key Ac \& Ao Ar value Ac \& Oo Ar \&... Oc Bo Ic # Li comment Bc
 .Pp
 The
-.Aq key
-is a string beginning with an alpha character
-.Pq Xr isalpha 3
-followed by any number of alpha numeric
-.Pq Xr isalnum 3
-or underscore
-.Sq _
-characters; this is case sensitive.
+.Ar key
+is an identifier beginning with a letter followed by any number of
+alphanumeric characters and/or underscores;
+it is case sensitive.
 The
-.Aq value
-is a number or a quoted string.
-More than one
-.Aq key
-and
-.Aq value
-pair may occur on a single line, but they may not be broken across
-lines.
+.Ar value
+is a number, or a string in double quotes.
+More than one key\(envalue pair may occur on a single line, but key and value
+may not be broken across lines.
 A
-.Sq \fB#\fP
+.Ql #
 character
 .Pq outside a quoted string
 indicates that the rest of the line is a comment.
 .Pp
-NOTE: Currently, no escaping is supported in strings, so they may not
-contain quotes.
+.Em Note :
+Currently, no escaping is supported in strings, so they may not
+contain double quotes.
 Numbers must be between 0 and
 .Dv LLONG_MAX ,
 inclusive.
