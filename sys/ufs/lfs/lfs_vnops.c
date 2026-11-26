@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.356 2026/09/23 17:47:52 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.357 2026/11/26 23:28:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.356 2026/09/23 17:47:52 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.357 2026/11/26 23:28:44 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -453,6 +453,11 @@ lfs_fsync(void *v)
 	}
 	if (wait && !VPISEMPTY(vp))
 		LFS_SET_UINO(ip, IN_MODIFIED);
+
+	if (ap->a_flags & FSYNC_RECLAIM) {
+		KASSERTMSG(LIST_EMPTY(&vp->v_dirtyblkhd),
+			   "lfs_inactive: dirty blocks");
+	}
 
 out:
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
