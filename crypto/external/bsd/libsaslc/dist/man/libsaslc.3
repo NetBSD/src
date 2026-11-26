@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.21 2026/11/26 12:18:07 uwe Exp $
+.\"	$NetBSD: libsaslc.3,v 1.22 2026/11/26 14:59:04 riastradh Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -359,8 +359,8 @@ Never returns
 .El
 .Ss Configuration
 .
-The library uses three types of dictionaries: context (or global),
-session, and mechanism, and they are searched in that order by
+The library uses three types of dictionaries: session, context (or
+global), and mechanism, and they are searched in that order by
 .Fn saslc_getprop
 and the first matching entry is taken.
 The context and mechanism dictionaries are loaded from configuration
