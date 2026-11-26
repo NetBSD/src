@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.117 2026/11/25 15:28:25 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.118 2026/11/26 13:46:06 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.117 2026/11/25 15:28:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.118 2026/11/26 13:46:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -660,18 +660,21 @@ EVCNT_ATTACH_STATIC(pmap_lev1map_fault_null_ev);
 #define	pmap_evcnt_set(e, v)	__nothing
 #endif
 
+struct pmap_atc;
+
 #if MMU_CONFIG_HP_CLASS
-static void pmap_atc_process_hp(void);
+static void pmap_atc_process_hp(const struct pmap_atc *);
 #endif
 #if MMU_CONFIG_68851_CLASS
-static void pmap_atc_process_51(void);
+static void pmap_atc_process_51(const struct pmap_atc *);
 #endif
 #if MMU_CONFIG_68040_CLASS
-static void pmap_atc_process_40(void);
+static void pmap_atc_process_40(const struct pmap_atc *);
 #endif
 
 static void (*pmap_load_urp_func)(paddr_t) __read_mostly;
-static void (*pmap_atc_process_local_func)(void) __read_mostly;
+static void (*pmap_atc_process_local_func)(const struct pmap_atc *)
+							__read_mostly;
 
 static void
 pmap_mmuclass_init(void)
@@ -758,17 +761,27 @@ struct pmap_message {
 	uint32_t pmsg_cpus;		/* target CPUs */
 	u_int    pmsg_type;		/* message type */
 	union {
-		pmap_t pmsg_pmap;	/* target pmap */
+		pmap_t pmsg_pmap;	   /* target pmap */
+		struct pmap_atc *pmsg_atc; /* ATC list */
 	};
 };
 
 #define	PMSG_T_UNLOAD		0	/* unload this user pmap */
+#define	PMSG_T_ATC		1	/* process ATC list */
 
 #define	PMSG_T_user_last	PMSG_T_UNLOAD
 
 static void pmap_message_user_acquire(struct pmap_message *);
 static void pmap_message_user_send(struct pmap_message *);
 static void pmap_message_user_wait(struct pmap_message *);
+
+static void pmap_message_intr_acquire(struct pmap_message *);
+static void pmap_message_intr_send(struct pmap_message *);
+static void pmap_message_intr_wait(struct pmap_message *);
+
+static void pmap_message_acquire(struct pmap_message *);
+static void pmap_message_send(struct pmap_message *);
+static void pmap_message_wait(struct pmap_message *);
 
 #endif /* MULTIPROCESSOR */
 
@@ -1141,6 +1154,9 @@ pmap_cpu_self_clear(pmap_t pmap)
 struct pmap_atc {
 	uint16_t	atc_count;
 	uint16_t	atc_flags;
+#if defined(MULTIPROCESSOR)
+	uint32_t	atc_cpus;
+#endif
 	struct {
 		pmap_t	atc_pmap;
 		vaddr_t	atc_addrflags;
@@ -1275,10 +1291,9 @@ hp_tbis(vaddr_t va)
 }
 
 static void
-pmap_atc_process_hp(void)
+pmap_atc_process_hp(const struct pmap_atc *atc)
 {
 	const struct pmap_percpu *pc = pmap_percpu();
-	const struct pmap_atc *atc = &pc->pc_atc;
 
 	if (atc->atc_flags & ATC_F_IC) {
 		pmap_evcnt(atc_ic);
@@ -1397,10 +1412,9 @@ pflush_one_super51(vaddr_t va)
 }
 
 static void
-pmap_atc_process_51(void)
+pmap_atc_process_51(const struct pmap_atc *atc)
 {
 	const struct pmap_percpu *pc = pmap_percpu();
-	const struct pmap_atc *atc = &pc->pc_atc;
 
 	if (atc->atc_flags & ATC_F_ALL) {
 		switch (atc->atc_flags & (ATC_F_USER|ATC_F_SUPER)) {
@@ -1533,10 +1547,9 @@ bc60_inval(int which)
 #endif /* M68060 */
 
 static void
-pmap_atc_process_40(void)
+pmap_atc_process_40(const struct pmap_atc *atc)
 {
 	const struct pmap_percpu *pc = pmap_percpu();
-	const struct pmap_atc *atc = &pc->pc_atc;
 
 	if (atc->atc_flags & ATC_F_ALL) {
 		switch (atc->atc_flags & (ATC_F_IC|ATC_F_DC)) {
@@ -1642,6 +1655,11 @@ pmap_atc_invalidate(pmap_t pmap, vaddr_t va, paddr_t pa, uint16_t flags)
 
 	if (__predict_true(pmap != NULL)) {
 		flags |= (pmap == pmap_kernel() ? ATC_F_SUPER : ATC_F_USER);
+#if defined(MULTIPROCESSOR)
+		atc->atc_cpus |= pmap_cpu_others(pmap);
+	} else {
+		atc->atc_cpus |= pmap_cpu_others(pmap_kernel());
+#endif
 	}
 
 	if ((i = atc->atc_count) == ATC_MAXVA || (flags & ATC_F_ALL) != 0) {
@@ -1731,11 +1749,56 @@ pmap_atc_process(void)
 	}
 #endif
 
-	if (atc->atc_count) {
-		(*pmap_atc_process_local_func)();
+	if (atc->atc_count || atc->atc_flags) {
+#if defined(MULTIPROCESSOR)
+		/*
+		 * On MP configurations, we need to invalidate ALL for
+		 * P->V ops because we have only weak references on the
+		 * pmap pointers in the ATC list.
+		 */
+		if (__predict_false((atc->atc_flags & ATC_F_PV) != 0)) {
+			atc->atc_flags |= ATC_F_ALL;
+		}
+		uint32_t others =
+		    (atc->atc_flags & ATC_F_ALL) ? pmap_kernel()->pm_cpus
+						 : atc->atc_cpus;
+		struct pmap_message pmsg = {
+			.pmsg_cpus = others,
+			.pmsg_type = PMSG_T_ATC,
+			.pmsg_atc  = atc,
+		};
+		int s;
+
+		if (others) {
+			if (__predict_false(cpuinfo.ci_idepth != 0)) {
+				s = spl7();
+				pmap_message_intr_acquire(&pmsg);
+				pmap_message_intr_send(&pmsg);
+			} else {
+				s = getsr();
+				KASSERT((s & PSL_HIGHIPL) == PSL_LOWIPL);
+				pmap_message_acquire(&pmsg);
+				pmap_message_send(&pmsg);
+			}
+			/* Do our work in parallel with others. */
+		}
+#endif /* MULTIPROCESSOR */
+		(*pmap_atc_process_local_func)(atc);
+#if defined(MULTIPROCESSOR)
+		if (others) {
+			if (__predict_false(cpuinfo.ci_idepth != 0)) {
+				pmap_message_intr_wait(&pmsg);
+				_splx(s); /* skip softint processing */
+			} else {
+				pmap_message_wait(&pmsg);
+				/* PSL_LOWIPL asserted above. */
+			}
+		}
+		atc->atc_cpus = 0;
+#endif /* MULTIPROCESSOR */
 		atc->atc_count = 0;
+		atc->atc_flags = 0;
 	}
-	atc->atc_flags = 0;
 }
 
 #if 0
@@ -2541,28 +2604,120 @@ pmap_table_insert(pmap_t pmap, struct pmap_table *t1, unsigned int stidx,
 #if defined(MULTIPROCESSOR)
 
 /*
- * User pmap messages can only be sent from thread context, and the
- * target pmap lock must be held.
+ * Interprocessor pmap messages allow a pmap operation running on cpuA
+ * to send a message to cpuB instructing it to invalidate ATC entries,
+ * flush its caches, or unload a specific pmap.  They are arranged into
+ * three priority levels:
+ *
+ *	- user pmap messages (highest)
+ *	- interrupt messages
+ *	- normal messages (lowest)
+ *
+ * User pmap messages are the highest priority beause they are intended
+ * to perform a single function: to unload the specified user pmap from
+ * the receiver's %urp and mark it not-active.  Its high-priority status
+ * comes from the fact that unloading a user pmap may render subsequent
+ * ATC invalidation work redundant; by processing an unload first, then
+ * this redundant invalidation work can be avoided.  User pmap messages
+ * can only be sent from thread context, and the target pmap lock must
+ * be held.
+ *
+ * Interrupt messages are sent when the sending CPU is making the request
+ * from an interrupt context.  These are regular ATC invalidation requests,
+ * but waiting for completion comes with special requirements (checking
+ * for IPIs while waiting, because we always need to be able to receive
+ * IPIs) and the completion of the receivers stands in the way of the
+ * sender's interrupt task completing.
+ *
+ * Normal message also may only be sent from a thread context, but there
+ * is no requirement that any locks be held.  The most common path for
+ * these messages is from pmap_update().
+ *
+ * Only one of each type can be sent globally at any given time, although
+ * all three can be sent by different CPUs concurrently.  This is a
+ * conscious trade-off between complexity and parallelism.  There is a
+ * single "mailbox slot" per priority that functions both as the message
+ * pointer and as the mutex for that slot.
+ *
+ * Each of these 3 pmap message priorities have their own IPI type and
+ * entry points from the IPI handler:
+ *
+ *	- pmap_message_user_process()
+ *	- pmap_message_intr_process()
+ *	- pmap_message_process()
+ *
+ * User pmap messages are sent from pmap_set_lev1map().  Interrupt and
+ * normal messages are sent by pmap_atc_process().
  */
-static struct pmap_message * volatile pmap_user_msgp __cacheline_aligned;
+
+static struct pmap_message *pmap_user_msgp __cacheline_aligned;
+static struct pmap_message *pmap_intr_msgp __cacheline_aligned;
+static struct pmap_message *pmap_msgp __cacheline_aligned;
 
 static void
-pmap_message_user_acquire(struct pmap_message *pmsg)
+pmap_message_acquire_impl(struct pmap_message **msgp,
+			  struct pmap_message *pmsg,
+			  void (*spin_hook)(void))
 {
 	KASSERT(pmsg->pmsg_cpus != 0);
-	KASSERT(pmsg->pmsg_type <= PMSG_T_user_last);
-	KASSERT(pmsg->pmsg_pmap != NULL && pmsg->pmsg_pmap != pmap_kernel());
 
 	for (;;) {
-		void *actual = atomic_cas_ptr(&pmap_user_msgp, NULL, pmsg);
+		void *actual = atomic_cas_ptr(msgp, NULL, pmsg);
 		if (actual == NULL) {
 			return;
 		}
 		/* Spin waiting for it to clear. */
-		while (atomic_load_relaxed(&pmap_user_msgp) != NULL) {
-			__nothing;
+		while (atomic_load_relaxed(msgp) != NULL) {
+			(*spin_hook)();
 		}
 	}
+}
+
+static void
+pmap_message_wait_impl(struct pmap_message **msgp,
+		       struct pmap_message *pmsg,
+		       void (*spin_hook)(void))
+{
+	/* Spin waiting for targets to finish. */
+	while (atomic_load_relaxed(&pmsg->pmsg_cpus) != 0) {
+		(*spin_hook)();
+	}
+	atomic_store_relaxed(msgp, NULL);
+}
+
+static void
+pmap_message_process_impl(struct pmap_message **msgp)
+{
+	struct pmap_percpu *pc = pmap_percpu();
+	struct pmap_message *pmsg = atomic_load_relaxed(msgp);
+
+	switch (pmsg->pmsg_type) {
+	case PMSG_T_UNLOAD:
+		if (pmsg->pmsg_pmap == pc->pc_pmap) {
+			pmap_cpu_self_clear(pmsg->pmsg_pmap);
+			pc->pc_pmap = NULL;
+			pmap_load_urp(null_segtab_pa);
+		}
+		break;
+
+	case PMSG_T_ATC:
+		(*pmap_atc_process_local_func)(pmsg->pmsg_atc);
+		break;
+
+	default:
+		panic("%s: unknown type=%u\n", __func__, pmsg->pmsg_type);
+	}
+
+	atomic_and_32(&pmsg->pmsg_cpus, ~(1U << cpu_number()));
+}
+
+static void
+pmap_message_user_acquire(struct pmap_message *pmsg)
+{
+	KASSERT(pmsg->pmsg_type <= PMSG_T_user_last);
+	KASSERT(pmsg->pmsg_pmap != NULL && pmsg->pmsg_pmap != pmap_kernel());
+
+	pmap_message_acquire_impl(&pmap_user_msgp, pmsg, voidop);
 }
 
 static void
@@ -2574,32 +2729,69 @@ pmap_message_user_send(struct pmap_message *pmsg)
 static void
 pmap_message_user_wait(struct pmap_message *pmsg)
 {
-	/* Spin waiting for targets to finish. */
-	while (atomic_load_relaxed(&pmsg->pmsg_cpus) != 0) {
-		__nothing;
-	}
-
-	atomic_store_relaxed(&pmap_user_msgp, NULL);
+	pmap_message_wait_impl(&pmap_user_msgp, pmsg, voidop);
 }
 
 void
 pmap_message_user_process(void)
 {
-	struct pmap_percpu *pc = pmap_percpu();
-	struct pmap_message *pmsg = atomic_load_relaxed(&pmap_user_msgp);
+	pmap_message_process_impl(&pmap_user_msgp);
+}
 
-	switch (pmsg->pmsg_type) {
-	case PMSG_T_UNLOAD:
-		if (pmsg->pmsg_pmap == pc->pc_pmap) {
-			pmap_cpu_self_clear(pmsg->pmsg_pmap);
-			pc->pc_pmap = NULL;
-			pmap_load_urp(null_segtab_pa);
-		}
-		break;
+static void
+pmap_message_intr_spin_hook(void)
+{
+	/* XXX check for pending IPIs */
+}
 
-	default:
-		panic("%s: unknown type=%u\n", __func__, pmsg->pmsg_type);
-	}
+static void
+pmap_message_intr_acquire(struct pmap_message *pmsg)
+{
+	pmap_message_acquire_impl(&pmap_intr_msgp, pmsg,
+				  pmap_message_intr_spin_hook);
+}
+
+static void
+pmap_message_intr_send(struct pmap_message *pmsg)
+{
+	/* XXX */
+}
+
+static void
+pmap_message_intr_wait(struct pmap_message *pmsg)
+{
+	pmap_message_wait_impl(&pmap_intr_msgp, pmsg,
+			       pmap_message_intr_spin_hook);
+}
+
+void
+pmap_message_intr_process(void)
+{
+	pmap_message_process_impl(&pmap_intr_msgp);
+}
+
+static void
+pmap_message_acquire(struct pmap_message *pmsg)
+{
+	pmap_message_acquire_impl(&pmap_msgp, pmsg, voidop);
+}
+
+static void
+pmap_message_send(struct pmap_message *pmsg)
+{
+	/* XXX */
+}
+
+static void
+pmap_message_wait(struct pmap_message *pmsg)
+{
+	pmap_message_wait_impl(&pmap_msgp, pmsg, voidop);
+}
+
+void
+pmap_message_process(void)
+{
+	pmap_message_process_impl(&pmap_msgp);
 }
 
 #endif /* MULTIPROCESSOR */
@@ -4233,8 +4425,9 @@ pmap_activate(struct lwp *l)
 	 * need to activate the kernel pmap.
 	 */
 	if (pmap != pmap_kernel()) {
+		PMAP_LOCK(pmap);
 #if defined(MULTIPROCESSOR)
-		int s = splhigh(); /* ensure pc_pmap is stable against IPIs */
+		int s = spl7(); /* ensure pc_pmap is stable against IPIs */
 		pmap_t prev_pmap = pc->pc_pmap;
 		if (prev_pmap != NULL && prev_pmap != pmap) {
 			pc->pc_pmap = NULL;
@@ -4242,7 +4435,6 @@ pmap_activate(struct lwp *l)
 		}
 		_splx(s);	   /* skip softint processing here */
 #endif
-		PMAP_LOCK(pmap);
 		pmap_cpu_self_set(pmap);
 		if (pc->pc_lev1pa == pmap->pm_lev1pa) {
 			pmap_evcnt(lev1map_act_hit);
