@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.118 2026/11/26 13:46:06 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.119 2026/11/26 14:16:01 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.118 2026/11/26 13:46:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.119 2026/11/26 14:16:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4379,6 +4379,8 @@ pmap_update(pmap_t pmap)
 {
 	struct pmap_garbage g;
 
+	KASSERT(cpuinfo.ci_idepth == 0 || pmap == pmap_kernel());
+
 	/* Process outstanding ATC invalidations. */
 	pmap_atc_process();
 
@@ -4393,7 +4395,6 @@ pmap_update(pmap_t pmap)
 		return;
 	}
 
-	KASSERT(cpuinfo.ci_idepth == 0);
 	PMAP_LOCK(pmap);
 	pmap_garbage_transfer(&g, &pmap->pm_garbage);
 	PMAP_UNLOCK(pmap);
