@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.17 2025/12/16 12:03:39 nia Exp $
+.\"	$NetBSD: libsaslc.3,v 1.18 2026/11/26 02:32:57 riastradh Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -418,7 +418,7 @@ Used by all mechanisms except EXTERNAL.
 .It SASLC_PROP_AUTHZID Po Qo AUTHZID Qc Pc
 The authorization string to use.
 By default, this string is empty.
-Used by the DIGEST-MD5, EXTERNAL, and PLAIN mechanisms.
+Used by the DIGEST-MD5, GSSAPI, EXTERNAL, and PLAIN mechanisms.
 .It SASLC_PROP_BASE64IO Po Qo BASE64IO Qc Pc
 If true ("true", "yes", or nonzero), then input and output strings are
 base64 encoded.
@@ -579,20 +579,20 @@ This turns on debugging as early as possible and is a global setting.
 .Sh GSSAPI AND KERBEROS
 The following is a minimal
 .Pq Heimdal
-Kerberos 5 setup for use with an smtp server that has been configured
-to support
+Kerberos 5 setup for a postfix client to relay mail via an smtp server
+on port 587 (submission), authenticated using
 .Em SASL
 with the
 .Em GSSAPI
 mechanism.
-It assumes that Kerberos and the smtp server will both run on
+It assumes that the Kerberos kdc and the smtp server will both run on
 .Em server.my.domain
 and that the client is on
 .Em client.my.domain .
 It also assumes that the smtp server runs as user
-.Em postfix
-and group
-.Em mail ,
+.Em postfix ,
+with home directory
+.Pa /var/spool/postfix ,
 and that it is not chrooted.
 .Pp
 On
@@ -600,15 +600,11 @@ On
 run the following script as
 .Em root
 and then start the Kerberos server
-.Xr kdc 8 .
-You will be prompted for a master password for Kerberos and a password
-for the
-.Em postfix
-principal.
+.Xr kdc 8 :
 .Bd -literal -offset indent
 #/bin/sh
 .Pp
-cat <<- EOF >> /etc/krb5.conf
+cat <<EOF >>/etc/krb5.conf
 [libdefaults]
 	default_realm = MY.DOMAIN
 [realms]
@@ -624,87 +620,135 @@ mkdir /var/heimdal
 chown root:wheel /var/heimdal
 chmod 755 /var/heimdal
 .Pp
-kstash
-kadmin -l init --realm-max-ticket-life=unlimited \\
-               --realm-max-renewable-life=unlimited \\
-               MY.DOMAIN
-kadmin -l add  --max-ticket-life="1 day" \\
-               --max-renewable-life="1 week" \\
-               --expiration-time=never \\
-               --pw-expiration-time=never \\
-               --attributes="" \\
-               postfix
-kadmin -l add  --random-key \\
-               --max-ticket-life="1 day" \\
-               --max-renewable-life="1 week" \\
-               --expiration-time=never \\
-               --pw-expiration-time=never \\
-               --attributes="" \\
-               smtp/server.my.domain
+kadmin -l init MY.DOMAIN
+kadmin -l add  --random-key --use-defaults \\
+  host/client.my.domain/postfix
+kadmin -l add  --random-key --use-defaults \\
+  smtp/server.my.domain
 kadmin -l ext -k /etc/krb5.keytab smtp/server.my.domain
-chown root:mail /etc/krb5.keytab
-chmod 640 /etc/krb5.keytab
+kadmin -l ext -k /tmp/postfix.kt host/client.my.domain/postfix
 .Ed
 .Pp
-Note that the keytab
+Configure the smtp server to authenticate clients using SASL GSSAPI
+with
 .Pa /etc/krb5.keytab
-must be readable by the smtp server or authentication will fail.
-The location of this keytab file may be changed with the environment
-variable
-.Ev KRB5_KTNAME .
-If postfix is the smtp server, note the
-.Em import_environment
-parameter
-.Pq see Xr postconf 5 .
+.Pq out of scope of this manual .
 .Pp
-On
-.Em client.my.domain
-copy the keytab file from
-.Pa server.my.domain:/etc/krb5.keytab
-to
-.Pa /etc/krb5.keytab .
-Setup the
-.Pa /etc/saslc.d
-configuration directory
-.Po see Sx CONFIGURATION
-above
-.Pc .
-Add the line
+Copy
+.Pa /etc/krb5.conf
+from the server.my.domain to client.my.domain (or set up equivalent
+Kerberos DNS records).
+Copy
+.Pa /tmp/postfix.kt
+from server.my.domain to
+.Pa /var/spool/postfix/krb5.keytab
+on client.my.domain
+.Pq confidentially, e.g. with Xr ssh 1 or Xr scp 1 ,
+and make sure it is readable only by user postfix:
 .Bd -literal -offset indent
-AUTHCID		"postfix"
+client# chown postfix:postfix /var/spool/postfix/krb5.keytab
+client# chmod 0600 /var/spool/postfix/krb5.keytab
 .Ed
 .Pp
-to the file
-.Pa /etc/saslc.d/postfix/mech/GSSAPI.conf
-so that the
-.Em postfix
-principal will be used for authentication.
-Enable
-.Em SASL
-in the smtp client.
-Assuming the smtp client is postfix, you will need to add the
-following to the
+Create the file
+.Pa /var/spool/postfix/.krb5/config
+with the content:
+.Bd -literal -offset indent
+[libdefaults]
+	default_realm = MY.DOMAIN
+	default_keytab_name = /var/spool/postfix/krb5.keytab
+.Ed
+.Pp
+For diagnostics as you struggle to get this set up, you may also want
+to configure logging in
+.Pa /var/spool/postfix/.krb5/config
+.Pq see Xr krb5.conf 5 :
+.Bd -literal -offset indent
+[logging]
+        default = SYSLOG
+.Ed
+.Pp
+Finally, configure the client to use SASL with the GSSAPI mechanism.
+Add the following lines to
 .Pa /etc/postfix/main.cf
-file to do this:
+to relay all mail through server.my.domain on port 587 (submission):
 .Bd -literal -offset indent
 smtp_sasl_auth_enable = yes
 smtp_sasl_type = saslc
 smtp_sasl_mechanism_filter = GSSAPI
+smtp_sasl_password_maps = static:host/client.my.domain/postfix
+smtp_tls_security_level = encrypt
 relayhost = [server.my.domain]:submission
 .Ed
 .Pp
-Here we have assumed the
-.Em submission
-port is the port the server is listening to.
-Finally, as
-.Em root ,
-run the command
+Then start up postfix or run
+.Cm postfix reload
+if it's already running,
+and you should be good to go!
+.Pp
+You can also configure postfix to relay only some mail this way,
+e.g. all mail from @my.domain, by creating a new service in
+.Pa /etc/postfix/master.cf
+that runs an
+.Xr smtp 8
+client with SASL GSSAPI authentication:
 .Bd -literal -offset indent
-su -m postfix -c kinit
+# name    type  private unpriv  chroot  wakeup  maxproc command
+smtpgss   unix  -       -       n       -       -       smtp
+  -o smtp_sasl_auth_enable=yes
+  -o smtp_sasl_type=saslc
+  -o smtp_sasl_mechanism_filter=GSSAPI
+  -o smtp_sasl_password_maps=static:host/client.my.domain/postfix
+  -o smtp_tls_security_level=encrypt
 .Ed
 .Pp
-to obtain a ticket for the postfix user with the postfix credential
-and you should be good to go!
+Then you can use the
+.Ql smtpgss
+service as a transport for select mail in
+.Pa /etc/postfix/main.cf :
+.Bd -literal -offset indent
+sender_dependent_default_transport_maps =
+  inline:{@my.domain=smtpgss:[server.my.domain]:submission}
+.Ed
+.Pp
+Mail from @my.domain senders be relayed through server.my.domain using
+the
+.Ql smtpgss
+transport with SASL GSSAPI authentication, but mail from other domains
+will still go through the ordinary
+.Ql smtp
+transport as before.
+.Pp
+Postfix will provide the following default properties if not configured
+in
+.Pa /etc/saslc.d/postfix/mech/GSSAPI.conf ,
+so you don't need to set them there:
+.Pp
+.Bl -tag -width "HOSTNAME" -offset indent -compact
+.It AUTHCID
+username set in
+.Dv smtp_sasl_password_maps
+.Pq see Xr postconf 5
+.It QOPMASK
+.Ql auth
+.El
+.Pp
+Additionally, it will provide the following properties irrespective of
+.Pa /etc/saslc.d/postfix/mech/GSSAPI.conf ,
+so you can't change them there:
+.Pp
+.Bl -tag -width "HOSTNAME" -offset indent -compact
+.It PASSWD
+password set in
+.Dv smtp_sasl_password_maps
+.Pq ignored for GSSAPI anyway
+.It SERVICE
+.Ql smtp
+.It HOSTNAME
+hostname of the server
+.It BASE64IO
+.Ql true
+.El
 .Sh FILES
 .Bl -tag -width /etc/saslc.d
 .It Pa /etc/saslc.d
