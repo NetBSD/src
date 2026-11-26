@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm.c,v 1.3 2026/11/26 03:39:30 hkenken Exp $ */
+/* $NetBSD: imx_ccm.c,v 1.4 2026/11/26 06:03:59 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm.c,v 1.3 2026/11/26 03:39:30 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm.c,v 1.4 2026/11/26 06:03:59 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,6 +93,9 @@ imx_ccm_clock_set_rate(void *priv, struct clk *clkp, u_int rate)
 
 	if (clk->set_rate)
 		return clk->set_rate(sc, clk, rate);
+
+	if (clk_get_rate(clkp) == rate)
+		return 0;
 
 	return ENXIO;
 }
@@ -224,7 +227,12 @@ imx_ccm_clock_attach(struct imx_ccm_softc *sc)
 	sc->sc_clkdom.priv = sc;
 
 	for (int i = 0; i < sc->sc_nclks; i++) {
-		if (sc->sc_clks[i].regidx >= IMX_CCM_N_REGS) {
+		/*
+		 * Use 0 to mark an unmapped bus_space handle. On ARM,
+		 * mapped handles are nonzero kernel virtual addresses.
+		 */
+		if (sc->sc_clks[i].regidx >= IMX_CCM_N_REGS ||
+		    sc->sc_bsh[sc->sc_clks[i].regidx] == 0) {
 			aprint_error(": %s: invalid regidx %u\n",
 			    sc->sc_clks[i].base.name, sc->sc_clks[i].regidx);
 			return EINVAL;

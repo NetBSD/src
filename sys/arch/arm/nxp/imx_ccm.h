@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm.h,v 1.3 2026/11/26 03:39:30 hkenken Exp $ */
+/* $NetBSD: imx_ccm.h,v 1.4 2026/11/26 06:03:59 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -301,6 +301,7 @@ const char *imx_ccm_div_get_parent(struct imx_ccm_softc *, struct imx_ccm_clk *)
 		.get_parent = imx_ccm_div_get_parent,			\
 	}
 
+/* busy_reg must be in the same register region (regidx) as the divider. */
 #define	IMX_DIV_BUSY(_id, _name, _parent, _reg, _mask, _flags, _busy_reg, _busy_mask) \
 	IMX_DIV_BUSY_INDEX(_id, 0, _name, _parent, _reg, _mask, _flags, _busy_reg, _busy_mask)
 #define	IMX_DIV_BUSY_INDEX(_id, _regidx, _name, _parent, _reg, _mask, _flags, _busy_reg, _busy_mask) \
