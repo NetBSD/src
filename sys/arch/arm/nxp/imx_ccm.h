@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm.h,v 1.2 2026/11/24 11:05:52 hkenken Exp $ */
+/* $NetBSD: imx_ccm.h,v 1.3 2026/11/26 03:39:30 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -48,6 +48,7 @@ enum imx_ccm_clktype {
 	IMX_CCM_FIXED_FACTOR,
 	IMX_CCM_MUX,
 	IMX_CCM_DIV,
+	IMX_CCM_DPLL,
 };
 
 /* External clocks */
@@ -122,7 +123,6 @@ int	imx_ccm_composite_set_parent(struct imx_ccm_softc *, struct imx_ccm_clk *, c
 
 #define	IMX_COMPOSITE(_id, _name, _parents, _reg, _flags)	\
 	IMX_COMPOSITE_INDEX(_id, 0, _name, _parents, _reg, _flags)
-
 #define	IMX_COMPOSITE_INDEX(_id, _regidx, _name, _parents, _reg, _flags) \
 	{							\
 		.id = (_id),					\
@@ -233,7 +233,6 @@ int	imx_ccm_mux_set_parent(struct imx_ccm_softc *, struct imx_ccm_clk *, const c
 
 #define	IMX_MUX(_id, _name, _parents, _reg, _sel)			\
 	IMX_MUX_INDEX(_id, 0, _name, _parents, _reg, _sel)
-
 #define	IMX_MUX_INDEX(_id, _regidx, _name, _parents, _reg, _sel)	\
 	{								\
 		.id = (_id),						\
@@ -249,6 +248,23 @@ int	imx_ccm_mux_set_parent(struct imx_ccm_softc *, struct imx_ccm_clk *, const c
 		.set_parent = imx_ccm_mux_set_parent,			\
 	}
 
+#define	IMX_MUX_RO(_id, _name, _parents, _reg, _sel)			\
+	IMX_MUX_RO_INDEX(_id, 0, _name, _parents, _reg, _sel)
+#define	IMX_MUX_RO_INDEX(_id, _regidx, _name, _parents, _reg, _sel)	\
+	{								\
+		.id = (_id),						\
+		.regidx = (_regidx),					\
+		.type = IMX_CCM_MUX,					\
+		.base.name = (_name),					\
+		.base.flags = 0,					\
+		.u.mux.parents = (_parents),				\
+		.u.mux.nparents = __arraycount(_parents),		\
+		.u.mux.reg = (_reg),					\
+		.u.mux.sel = (_sel),					\
+		.get_parent = imx_ccm_mux_get_parent,			\
+		.set_parent = NULL,					\
+	}
+
 /* Divider clocks */
 
 struct imx_ccm_div {
@@ -258,6 +274,9 @@ struct imx_ccm_div {
 	u_int		flags;
 #define	IMX_DIV_SET_RATE_PARENT		__BIT(0)
 #define	IMX_DIV_ROUND_DOWN		__BIT(1)
+#define	IMX_DIV_ONE_BASED		__BIT(2)
+	bus_size_t	busy_reg;
+	uint32_t	busy_mask;
 };
 
 u_int	imx_ccm_div_get_rate(struct imx_ccm_softc *, struct imx_ccm_clk *);
@@ -282,6 +301,67 @@ const char *imx_ccm_div_get_parent(struct imx_ccm_softc *, struct imx_ccm_clk *)
 		.get_parent = imx_ccm_div_get_parent,			\
 	}
 
+#define	IMX_DIV_BUSY(_id, _name, _parent, _reg, _mask, _flags, _busy_reg, _busy_mask) \
+	IMX_DIV_BUSY_INDEX(_id, 0, _name, _parent, _reg, _mask, _flags, _busy_reg, _busy_mask)
+#define	IMX_DIV_BUSY_INDEX(_id, _regidx, _name, _parent, _reg, _mask, _flags, _busy_reg, _busy_mask) \
+	{								\
+		.id = (_id),						\
+		.regidx = (_regidx),					\
+		.type = IMX_CCM_DIV,					\
+		.base.name = (_name),					\
+		.base.flags = 0,					\
+		.u.div.parent = (_parent),				\
+		.u.div.reg = (_reg),					\
+		.u.div.mask = (_mask),					\
+		.u.div.flags = (_flags),				\
+		.u.div.busy_reg = (_busy_reg),				\
+		.u.div.busy_mask = (_busy_mask),			\
+		.get_rate = imx_ccm_div_get_rate,			\
+		.set_rate = imx_ccm_div_set_rate,			\
+		.get_parent = imx_ccm_div_get_parent,			\
+	}
+
+#define	IMX_DIV_RO(_id, _name, _parent, _reg, _mask)			\
+	IMX_DIV_RO_INDEX(_id, 0, _name, _parent, _reg, _mask)
+#define	IMX_DIV_RO_INDEX(_id, _regidx, _name, _parent, _reg, _mask)	\
+	{								\
+		.id = (_id),						\
+		.regidx = (_regidx),					\
+		.type = IMX_CCM_DIV,					\
+		.base.name = (_name),					\
+		.base.flags = 0,					\
+		.u.div.parent = (_parent),				\
+		.u.div.reg = (_reg),					\
+		.u.div.mask = (_mask),					\
+		.u.div.flags = 0,					\
+		.get_rate = imx_ccm_div_get_rate,			\
+		.set_rate = NULL,					\
+		.get_parent = imx_ccm_div_get_parent,			\
+	}
+
+/* DPLLs (for imx5) */
+
+struct imx_ccm_dpll {
+	const char	**parents;
+	u_int		nparents;
+};
+
+const char *imx_ccm_dpll_get_parent(struct imx_ccm_softc *, struct imx_ccm_clk *);
+u_int	imx_ccm_dpll_get_rate(struct imx_ccm_softc *, struct imx_ccm_clk *);
+
+#define	IMX_DPLL(_id, _regidx, _name, _parents)				\
+	{								\
+		.id = (_id),						\
+		.regidx = (_regidx),					\
+		.type = IMX_CCM_DPLL,					\
+		.base.name = (_name),					\
+		.base.flags = 0,					\
+		.u.dpll.parents = (_parents),				\
+		.u.dpll.nparents = __arraycount(_parents),		\
+		.get_rate = imx_ccm_dpll_get_rate,			\
+		.get_parent = imx_ccm_dpll_get_parent,			\
+	}
+
 /*
  * IMX clock definition
  */
@@ -299,6 +379,7 @@ struct imx_ccm_clk {
 		struct imx_ccm_fixed_factor fixed_factor;
 		struct imx_ccm_mux mux;
 		struct imx_ccm_div div;
+		struct imx_ccm_dpll dpll;
 		const char *extclk;
 	} u;
 
@@ -317,6 +398,8 @@ struct imx_ccm_clk {
 				      const char *);
 };
 
+#define	IMX_CCM_N_REGS	4
+
 /*
  * Driver state
  */
@@ -325,7 +408,7 @@ struct imx_ccm_softc {
 	device_t		sc_dev;
 	int			sc_phandle;
 	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh[2];
+	bus_space_handle_t	sc_bsh[IMX_CCM_N_REGS];
 
 	bus_addr_t		sc_baseaddr;
 

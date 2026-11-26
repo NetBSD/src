@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm_composite.c,v 1.2 2026/11/24 11:05:52 hkenken Exp $ */
+/* $NetBSD: imx_ccm_composite.c,v 1.3 2026/11/26 03:39:30 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_composite.c,v 1.2 2026/11/24 11:05:52 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm_composite.c,v 1.3 2026/11/26 03:39:30 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -106,32 +106,30 @@ imx_ccm_composite_set_rate(struct imx_ccm_softc *sc,
 
 	best_prediv = 0;
 	best_postdiv = 0;
-	best_diff = INT_MAX;
+	best_diff = 0;
 
 	const u_int prate = clk_get_rate(clk_parent);
 	if (prate == 0)
 		return ERANGE;
 
+	bool found = false;
 	for (u_int prediv = 1; prediv <= __SHIFTOUT_MASK(TARGET_ROOT_PRE_PODF) + 1; prediv++) {
 		for (u_int postdiv = 1; postdiv <= __SHIFTOUT_MASK(TARGET_ROOT_POST_PODF) + 1; postdiv++) {
 			const u_int cur_rate = prate / prediv / postdiv;
-			const int diff = (int)rate - (int)cur_rate;
-			if (composite->flags & IMX_COMPOSITE_ROUND_DOWN) {
-				if (diff >= 0 && diff < best_diff) {
-					best_diff = diff;
-					best_prediv = prediv;
-					best_postdiv = postdiv;
-				}
-			} else {
-				if (abs(diff) < best_diff) {
-					best_diff = abs(diff);
-					best_prediv = prediv;
-					best_postdiv = postdiv;
-				}
+			if (composite->flags & IMX_COMPOSITE_ROUND_DOWN)
+				if (rate < cur_rate)
+					continue;
+
+			const u_int diff = (rate > cur_rate) ? rate - cur_rate : cur_rate - rate;
+			if (!found || diff < best_diff) {
+				best_diff = diff;
+				best_prediv = prediv;
+				best_postdiv = postdiv;
+				found = true;
 			}
 		}
 	}
-	if (best_diff == INT_MAX)
+	if (!found)
 		return ERANGE;
 
 	val = CCM_READ(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT);

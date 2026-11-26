@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm.c,v 1.2 2026/11/24 11:05:52 hkenken Exp $ */
+/* $NetBSD: imx_ccm.c,v 1.3 2026/11/26 03:39:30 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm.c,v 1.2 2026/11/24 11:05:52 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm.c,v 1.3 2026/11/26 03:39:30 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -222,6 +222,67 @@ imx_ccm_clock_attach(struct imx_ccm_softc *sc)
 	sc->sc_clkdom.name = device_xname(sc->sc_dev);
 	sc->sc_clkdom.funcs = &imx_ccm_clock_funcs;
 	sc->sc_clkdom.priv = sc;
+
+	for (int i = 0; i < sc->sc_nclks; i++) {
+		if (sc->sc_clks[i].regidx >= IMX_CCM_N_REGS) {
+			aprint_error(": %s: invalid regidx %u\n",
+			    sc->sc_clks[i].base.name, sc->sc_clks[i].regidx);
+			return EINVAL;
+		}
+	}
+
+	if (sc->sc_clock_find_parent == NULL) {
+		for (int i = 0; i < sc->sc_nclks; i++) {
+			const char * const *parents = NULL;
+			int nparents = 0;
+			const struct imx_ccm_clk *clk = &sc->sc_clks[i];
+
+			switch (clk->type) {
+			case IMX_CCM_GATE:
+				nparents = 1;
+				parents = &clk->u.gate.parent;
+				break;
+			case IMX_CCM_DIV:
+				nparents = 1;
+				parents = &clk->u.div.parent;
+				break;
+			case IMX_CCM_PLL:
+				nparents = 1;
+				parents = &clk->u.pll.parent;
+				break;
+			case IMX_CCM_FIXED_FACTOR:
+				nparents = 1;
+				parents = &clk->u.fixed_factor.parent;
+				break;
+			case IMX_CCM_MUX:
+				parents = clk->u.mux.parents;
+				nparents = clk->u.mux.nparents;
+				break;
+			case IMX_CCM_COMPOSITE:
+				parents = clk->u.composite.parents;
+				nparents = clk->u.composite.nparents;
+				break;
+			case IMX_CCM_DPLL:
+				parents = clk->u.dpll.parents;
+				nparents = clk->u.dpll.nparents;
+				break;
+			case IMX_CCM_UNKNOWN:
+			case IMX_CCM_EXTCLK:
+			case IMX_CCM_FIXED:
+				break;
+			}
+
+			for (int n = 0; n < nparents; n++, parents++) {
+				if (*parents == NULL ||
+				    imx_ccm_clock_find(sc, *parents) == NULL) {
+					aprint_error(": %s: parent %s not found\n",
+					    clk->base.name, *parents);
+					return ENOENT;
+				}
+			}
+		}
+	}
+
 	for (int i = 0; i < sc->sc_nclks; i++) {
 		sc->sc_clks[i].base.domain = &sc->sc_clkdom;
 		clk_attach(&sc->sc_clks[i].base);
@@ -254,16 +315,17 @@ imx_ccm_print(struct imx_ccm_softc *sc)
 		case IMX_CCM_FIXED_FACTOR:	type = "fixed-factor"; break;
 		case IMX_CCM_MUX:		type = "mux"; break;
 		case IMX_CCM_DIV:		type = "div"; break;
+		case IMX_CCM_DPLL:		type = "dpll"; break;
 		default:			type = "???"; break;
 		}
 
-        	aprint_debug_dev(sc->sc_dev,
+		aprint_debug_dev(sc->sc_dev,
 		    "%3d %-14s %2s %-14s %-7s ",
 		    clk->id,
-        	    clk->base.name,
-        	    clkp_parent ? "<-" : "",
-        	    clkp_parent ? clkp_parent->name : "",
-        	    type);
+		    clk->base.name,
+		    clkp_parent ? "<-" : "",
+		    clkp_parent ? clkp_parent->name : "",
+		    type);
 		aprint_debug("%10d Hz\n", clk_get_rate(&clk->base));
 	}
 }

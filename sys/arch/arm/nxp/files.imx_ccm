@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx_ccm,v 1.1 2026/11/24 11:05:52 hkenken Exp $
+#	$NetBSD: files.imx_ccm,v 1.2 2026/11/26 03:39:30 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX Clock framework
 #
@@ -14,3 +14,6 @@ file	arch/arm/nxp/imx_ccm_gate.c		imx_ccm
 file	arch/arm/nxp/imx_ccm_mux.c		imx_ccm
 file	arch/arm/nxp/imx_ccm_pll.c		imx_ccm
 
+# DPLLs
+define	imx_ccm_dpll: imx_ccm
+file	arch/arm/nxp/imx_ccm_dpll.c		imx_ccm_dpll

@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm_fdt.c,v 1.1 2026/11/24 11:05:52 hkenken Exp $ */
+/* $NetBSD: imx_ccm_fdt.c,v 1.2 2026/11/26 03:39:30 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_fdt.c,v 1.1 2026/11/24 11:05:52 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm_fdt.c,v 1.2 2026/11/26 03:39:30 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,10 +87,8 @@ imx_ccm_attach(struct imx_ccm_softc *sc)
 
 	sc->sc_clock_find_parent = imx_ccm_clock_byname;
 
-	if (imx_ccm_clock_attach(sc) != 0) {
-		aprint_error(": couldn't attach clocks\n");
+	if (imx_ccm_clock_attach(sc) != 0)
 		return ENXIO;
-	}
 
 	fdtbus_register_clock_controller(sc->sc_dev, sc->sc_phandle,
 	    &imx_ccm_fdtclock_funcs);
