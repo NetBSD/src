@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.336 2026/06/29 06:07:21 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.337 2026/11/26 09:42:38 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.336 2026/06/29 06:07:21 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.337 2026/11/26 09:42:38 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -167,13 +167,6 @@ extern u_char	aarp_org_code[3];
 
 CTASSERT(sizeof(struct ether_addr) == 6);
 CTASSERT(sizeof(struct ether_header) == 14);
-
-#ifdef DIAGNOSTIC
-static struct timeval bigpktppslim_last;
-static int bigpktppslim = 2;	/* XXX */
-static int bigpktpps_count;
-static kmutex_t bigpktpps_lock __cacheline_aligned;
-#endif
 
 const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -725,15 +718,16 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 	if (etype != ETHERTYPE_MPLS && m->m_pkthdr.len >
 	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
-#ifdef DIAGNOSTIC
-		mutex_enter(&bigpktpps_lock);
-		if (ppsratecheck(&bigpktppslim_last, &bigpktpps_count,
-		    bigpktppslim)) {
-			printf("%s: discarding oversize frame (len=%d)\n",
-			    ifp->if_xname, m->m_pkthdr.len);
-		}
-		mutex_exit(&bigpktpps_lock);
-#endif
+		/*
+		 * Some Ethernet controllers do not allow the maximum receive
+		 * frame size to be configured in bytes. Additionally, some
+		 * Ethernet controllers cannot automatically adjust the
+		 * maximum receive frame size setting to account for the
+		 * presence or absence of a VLAN tag. ether_input() counts the
+		 * oversized frame into ierrors. There is no need to print an
+		 * error message.
+		 */
+
 		goto error;
 	}
 
@@ -2052,9 +2046,6 @@ void
 etherinit(void)
 {
 
-#ifdef DIAGNOSTIC
-	mutex_init(&bigpktpps_lock, MUTEX_DEFAULT, IPL_NET);
-#endif
 	ether_pktq_rps_hash_p = pktq_rps_hash_default;
 	ether_sysctl_setup(NULL);
 }
