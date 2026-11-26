@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.22 2026/01/05 05:02:47 perseant Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.23 2026/11/26 23:27:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.22 2026/01/05 05:02:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.23 2026/11/26 23:27:36 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -78,17 +78,11 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 			struct buf *ibp;
 			IFILE *ifp;
 
-#ifdef _KERNEL
-			if (!LFS_SEGLOCK_HELD(fs))
-				lfs_fraglock_enter(fs, RW_READER);
-#endif /* _KERNEL */
 			LFS_IENTRY(ifp, fs, ip->i_number, ibp);
 			lfs_if_setatime_sec(fs, ifp, acc->tv_sec);
 			lfs_if_setatime_nsec(fs, ifp, acc->tv_nsec);
 #ifdef _KERNEL
 			LFS_WRITEIENTRY(ifp, fs, ip->i_number, ibp);
-			if (!LFS_SEGLOCK_HELD(fs))
-				lfs_fraglock_exit(fs);
 #else /* ! _KERNEL */
 			LFS_BWRITE_LOG(ibp);
 #endif /* ! _KERNEL */
