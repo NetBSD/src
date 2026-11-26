@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.119 2026/11/26 14:16:01 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.120 2026/11/26 14:27:03 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.119 2026/11/26 14:16:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.120 2026/11/26 14:27:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1221,10 +1221,10 @@ hp_vac_inv_all(void)
 {
 	uint32_t *mmureg = (uint32_t *)(MMUbase + MMUCMD);
 
-	__asm __volatile("andl %0,%2;"
-			 "orl  %1,%2"
-		:
-		: "i" (~MMU_CEN), "i" (MMU_CEN), "m" (*mmureg));
+	__asm __volatile("andl %1,%0;"
+			 "orl  %2,%0"
+		: "+m" (*mmureg)
+		: "i" (~MMU_CEN), "i" (MMU_CEN));
 }
 
 static inline void
@@ -1235,8 +1235,7 @@ hp_vac_inv_super(void)
 
 	__asm __volatile("movl %1,%0;"
 			 "movl %0,%1"
-		: "=d" (tmp)
-		: "m" (*mmureg));
+		: "=d" (tmp), "+m" (*mmureg));
 }
 
 static inline void
@@ -1247,8 +1246,7 @@ hp_vac_inv_user(void)
 
 	__asm __volatile("movl %1,%0;"
 			 "movl %0,%1"
-		: "=d" (tmp)
-		: "m" (*mmureg));
+		: "=d" (tmp), "+m" (*mmureg));
 }
 
 static inline void
@@ -1267,9 +1265,9 @@ hp_tbias(void)
 {
 	uint32_t *mmureg = (uint32_t *)(MMUbase + MMUTBINVAL);
 
-	__asm __volatile("movl %0,%1"
-		:
-		: "i" (0x8000), "m" (*mmureg));
+	__asm __volatile("movl %1,%0"
+		: "=m" (*mmureg)
+		: "i" (0x8000));
 }
 
 static inline void
@@ -1277,9 +1275,9 @@ hp_tbiau(void)
 {
 	uint32_t *mmureg = (uint32_t *)(MMUbase + MMUTBINVAL);
 
-	__asm __volatile("movl %0,%1"
-		:
-		: "i" (0), "m" (*mmureg));
+	__asm __volatile("movl %1,%0"
+		: "=m" (*mmureg)
+		: "i" (0));
 }
 
 static inline void
