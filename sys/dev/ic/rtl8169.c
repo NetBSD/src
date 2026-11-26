@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.185 2026/09/26 00:48:28 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.186 2026/11/26 12:35:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.185 2026/09/26 00:48:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.186 2026/11/26 12:35:53 msaitoh Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -785,7 +785,8 @@ re_attach(struct rtk_softc *sc)
 	 * on the NanoPi R4S (non-EE version).
 	 */
 	if (ETHER_IS_ZERO(eaddr)) {
-		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
+		maclo = 0x00f0 | ETHER_MACADDR_UL |
+		    (cprng_strong32() & 0xffff0000);
 		machi = cprng_strong32() & 0xffff;
 		eaddr[0] = maclo & 0xff;
 		eaddr[1] = (maclo >> 8) & 0xff;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.46 2026/07/10 22:24:02 andvar Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.47 2026/11/26 12:35:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm9000.c,v 1.46 2026/07/10 22:24:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm9000.c,v 1.47 2026/11/26 12:35:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -222,7 +222,8 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 		dme_read_c(sc, DM9000_PAB0, enaddr, 6);
 		if (ETHER_IS_ONE(enaddr) || ETHER_IS_ZERO(enaddr)) {
 			/* make a random MAC address */
-			uint32_t maclo = 0x00f2 | (cprng_strong32() << 16);
+			uint32_t maclo = 0x00f0 | ETHER_MACADDR_UL |
+			    (cprng_strong32() << 16);
 			uint32_t machi = cprng_strong32();
 			enaddr[0] = maclo;
 			enaddr[1] = maclo >> 8;

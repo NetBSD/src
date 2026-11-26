@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.56 2026/09/03 02:12:14 gutteridge Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.57 2026/11/26 12:35:53 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.56 2026/09/03 02:12:14 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.57 2026/11/26 12:35:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1503,12 +1503,12 @@ eqos_get_eaddr(struct eqos_softc *sc, uint8_t *eaddr)
 	    GMAC_MAC_ADDRESS_HIGH_ADDR);
 	if (maclo == 0xFFFFFFFF && machi == 0xFFFF) {
 		/* Create one */
-		maclo = 0x00f2 | (cprng_strong32() << 16);
+		maclo = 0x00f0 | ETHER_MACADDR_UL | (cprng_strong32() << 16);
 		machi = cprng_strong32() & 0xffff;
-	} else if (maclo & 0x00000001) {
+	} else if (maclo & ETHER_MACADDR_IG) {
 		aprint_error_dev(sc->sc_dev,
 		    "Wrong MAC address. Clearing the multicast bit.\n");
-		maclo &= ~0x00000001;
+		maclo &= ~ETHER_MACADDR_IG;
 	}
 
 	eaddr[0] = maclo & 0xff;

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.37 2022/09/18 15:44:29 thorpej Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.38 2026/11/26 12:35:53 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.37 2022/09/18 15:44:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.38 2026/11/26 12:35:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1144,7 +1144,8 @@ sunxi_emac_get_eaddr(struct sunxi_emac_softc *sc, uint8_t *eaddr)
 		} else {
 #endif
 			/* Create one */
-			maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
+			maclo = 0x00f0 | ETHER_MACADDR_UL |
+			    (cprng_strong32() & 0xffff0000);
 			machi = cprng_strong32() & 0xffff;
 #if notyet
 		}

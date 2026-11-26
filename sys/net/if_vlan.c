@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.172 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.173 2026/11/26 12:35:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.172 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.173 2026/11/26 12:35:54 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -339,8 +339,8 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifp = &ifv->ifv_if;
 	LIST_INIT(&ifv->ifv_mc_listhead);
 	cprng_fast(ifv->ifv_lladdr, sizeof(ifv->ifv_lladdr));
-	ifv->ifv_lladdr[0] &= 0xFE; /* clear I/G bit */
-	ifv->ifv_lladdr[0] |= 0x02; /* set G/L bit */
+	ifv->ifv_lladdr[0] &= ~ETHER_MACADDR_IG;
+	ifv->ifv_lladdr[0] |= ETHER_MACADDR_UL;
 
 	mib->ifvm_ifvlan = ifv;
 	mib->ifvm_p = NULL;

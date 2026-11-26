@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.102 2026/06/22 20:26:34 jakllsch Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.103 2026/11/26 12:35:53 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.102 2026/06/22 20:26:34 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.103 2026/11/26 12:35:53 msaitoh Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -209,7 +209,8 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 
 		if (maclo == 0xffffffff && (machi & 0xffff) == 0xffff) {
 			/* fake MAC address */
-			maclo = 0x00f2 | (cprng_strong32() << 16);
+			maclo = 0x00f0 | ETHER_MACADDR_UL |
+			    (cprng_strong32() << 16);
 			machi = cprng_strong32();
 		}
 

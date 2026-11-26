@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.21 2026/06/22 05:57:31 andvar Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.22 2026/11/26 12:35:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.21 2026/06/22 05:57:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.22 2026/11/26 12:35:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1541,8 +1541,8 @@ iavf_prepare_fakeaddr(struct iavf_softc *sc)
 	rndval = cprng_strong64();
 
 	memcpy(sc->sc_enaddr_fake, &rndval, sizeof(sc->sc_enaddr_fake));
-	sc->sc_enaddr_fake[0] &= 0xFE;
-	sc->sc_enaddr_fake[0] |= 0x02;
+	sc->sc_enaddr_fake[0] &= ~ETHER_MACADDR_IG;
+	sc->sc_enaddr_fake[0] |= ETHER_MACADDR_UL;
 }
 
 static int

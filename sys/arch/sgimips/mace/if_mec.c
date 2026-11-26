@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.65 2023/12/20 15:29:07 thorpej Exp $ */
+/* $NetBSD: if_mec.c,v 1.66 2026/11/26 12:35:53 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.65 2023/12/20 15:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.66 2026/11/26 12:35:53 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -523,7 +523,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * Create a MAC address by abusing the "netaddr" env var
 		 */
-		sc->sc_enaddr[0] = 0xf2;
+		sc->sc_enaddr[0] = 0xf0 | ETHER_MACADDR_UL;
 		sc->sc_enaddr[1] = 0x0b;
 		sc->sc_enaddr[2] = 0xa4;
 		if (netaddr) {
