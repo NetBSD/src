@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.222 2026/11/01 20:01:40 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.223 2026/11/26 23:28:10 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -1073,7 +1073,6 @@ struct lfs {
 	size_t lfs_devbsize;		/* Device block size */
 	size_t lfs_devbshift;		/* Device block shift */
 	krwlock_t lfs_fraglock;
-	krwlock_t lfs_iflock;		/* Ifile lock */
 	kcondvar_t lfs_stopcv;		/* Wrap lock */
 	struct lwp *lfs_stoplwp;
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */

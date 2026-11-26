@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.117 2026/11/01 20:01:40 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.118 2026/11/26 23:28:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.117 2026/11/01 20:01:40 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.118 2026/11/26 23:28:10 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -690,7 +690,6 @@ lfs_prelock(struct lfs *fs, unsigned long flags)
 	fs->lfs_prelocklwp = curlwp;
 
 	mutex_exit(&lfs_lock);
-	EXCL_IFLOCK(fs);
 	return 0;
 
  errout:
@@ -719,14 +718,6 @@ lfs_prelock_held(struct lfs *fs)
 void
 lfs_preunlock(struct lfs *fs)
 {
-	int last = 0;
-
-	mutex_enter(&lfs_lock);
-	last = (fs->lfs_prelock == 1);
-	mutex_exit(&lfs_lock);
-	if (last)
-		UNEXCL_IFLOCK(fs);
-
 	mutex_enter(&lfs_lock);
 	if (--fs->lfs_prelock > 0) {
 		mutex_exit(&lfs_lock);
@@ -931,6 +922,8 @@ lfs_seguse_clrflag_all(struct lfs *fs, uint32_t flag)
 	SEGUSE *sup;
 	struct buf *bp;
 	int i;
+
+	ASSERT_SEGLOCK(fs);
 
 	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
 		LFS_SEGENTRY(sup, fs, i, bp);

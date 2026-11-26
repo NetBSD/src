@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.409 2026/11/01 20:01:40 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.410 2026/11/26 23:28:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.409 2026/11/01 20:01:40 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.410 2026/11/26 23:28:10 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1138,7 +1138,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_pages = 0;
 	fs->lfs_prelocklwp = NULL;
 	rw_init(&fs->lfs_fraglock);
-	rw_init(&fs->lfs_iflock);
 	cv_init(&fs->lfs_sleeperscv, "lfs_slp");
 	cv_init(&fs->lfs_diropscv, "lfs_dirop");
 	cv_init(&fs->lfs_stopcv, "lfsstop");
@@ -1485,7 +1484,6 @@ lfs_unmount(struct mount *mp, int mntflags)
 	cv_destroy(&fs->lfs_nextsegsleep);
 
 	rw_destroy(&fs->lfs_fraglock);
-	rw_destroy(&fs->lfs_iflock);
 
 	kmem_free(fs, sizeof(struct lfs));
 	kmem_free(ump, sizeof(*ump));

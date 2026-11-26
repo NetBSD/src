@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.62 2026/11/01 20:01:40 perseant Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.63 2026/11/26 23:28:10 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -660,40 +660,9 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 #define	SEGTABSIZE_SU(fs)						\
 	((lfs_sb_getnseg(fs) + SEGUPB(fs) - 1) / lfs_sb_getsepb(fs))
 
-#ifdef _KERNEL
-# define EXCL_IFLOCK(F) 						\
-  do {									\
-	KASSERT(!mutex_owned(&lfs_lock));				\
-	rw_enter(&(F)->lfs_iflock, RW_WRITER);				\
-  } while(0)
-# define UNEXCL_IFLOCK(F)						\
-  do {									\
-	rw_exit(&(F)->lfs_iflock);					\
-  } while(0)
-# define SHARE_IFLOCK(F) 						\
-  do {									\
-	KASSERT(!mutex_owned(&lfs_lock));				\
-	if (!rw_write_held(&(F)->lfs_iflock)) {				\
-		rw_enter(&(F)->lfs_iflock, RW_READER);			\
-	}								\
-  } while(0)
-# define UNSHARE_IFLOCK(F)						\
-  do {									\
-	if (!rw_write_held(&(F)->lfs_iflock)) {				\
-		rw_exit(&(F)->lfs_iflock);				\
-	}								\
-  } while(0)
-#else /* ! _KERNEL */
-# define EXCL_IFLOCK(F)
-# define UNEXCL_IFLOCK(F)
-# define SHARE_IFLOCK(F)
-# define UNSHARE_IFLOCK(F)
-#endif /* ! _KERNEL */
-
 /* Read in the block with a specific segment usage entry from the ifile. */
 #define	LFS_SEGENTRY(SP, F, IN, BP) do {				\
 	int _e;								\
-	SHARE_IFLOCK(F);						\
 	VTOI((F)->lfs_ivnode)->i_state |= IN_ACCESS;			\
 	if ((_e = bread((F)->lfs_ivnode,				\
 	    ((IN) / lfs_sb_getsepb(F)) + lfs_sb_getcleansz(F),		\
@@ -711,12 +680,10 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 	if (((BP)->b_flags & B_GATHERED) == 0)			 	\
 		(F)->lfs_flags |= LFS_IFDIRTY;				\
 	LFS_BWRITE_LOG(BP);						\
-	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 #define LFS_RELEASESEGENTRY(SP, F, IN, BP) do {				\
 	brelse((BP), 0);						\
-	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 /*
@@ -870,7 +837,6 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 } while (0)
 #define	LFS_IENTRY(IP, F, IN, BP) do {					\
 	int _e;								\
-	SHARE_IFLOCK(F);						\
 	VTOI((F)->lfs_ivnode)->i_state |= IN_ACCESS;			\
 	if ((_e = bread((F)->lfs_ivnode,				\
 	(IN) / lfs_sb_getifpb(F) + lfs_sb_getcleansz(F) + lfs_sb_getsegtabsz(F), \
@@ -891,11 +857,9 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 	if (((BP)->b_flags & B_GATHERED) == 0)				\
 		(F)->lfs_flags |= LFS_IFDIRTY;				\
 	LFS_BWRITE_LOG(BP);						\
-	UNSHARE_IFLOCK(F);						\
 } while (0)
 #define LFS_RELEASEIENTRY(IP, F, IN, BP) do {				\
 	brelse((BP), 0);						\
-	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 #define LFS_DEF_IF_ACCESSOR(type, type32, field) \
@@ -986,14 +950,12 @@ lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
 /* Read in the block with the cleaner info from the ifile. */
 #define LFS_CLEANERINFO(CP, F, BP) do {					\
 	int _e;								\
-	SHARE_IFLOCK(F);						\
 	VTOI((F)->lfs_ivnode)->i_state |= IN_ACCESS;			\
 	_e = bread((F)->lfs_ivnode,					\
 	    (daddr_t)0, lfs_sb_getbsize(F), 0, &(BP));			\
 	if (_e)								\
 		panic("lfs: ifile read: cleanerinfo: error %d\n", _e);	\
 	(CP) = (CLEANERINFO *)(BP)->b_data;				\
-	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 /*
