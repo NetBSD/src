@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.319 2026/11/01 20:01:40 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.320 2026/11/26 23:29:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.319 2026/11/01 20:01:40 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.320 2026/11/26 23:29:37 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -430,13 +430,19 @@ lfs_writevnodes_selector(void *cl, struct vnode *vp)
 	KASSERT(mutex_owned(vp->v_interlock));
 
 	/*
+	 * If we are flushing, we have to process this vnode regardless of
+	 * any other considerations.
+	 */
+	if (IS_FLUSHING(c->fs, vp))
+		return true;
+
+	/*
 	 * A vnode being reclaimed will be in state VS_RECLAIMING
 	 * while it attemmpts to get the segment lock.  We hold the
 	 * segment lock, so we must skip these vnodes in order to
 	 * avoid a deadlock.
 	 */
-	if (vip->vi_state != VS_LOADED && vip->vi_state != VS_RECLAIMED
-	    && !IS_FLUSHING(c->fs, vp))
+	if (vip->vi_state != VS_LOADED && vip->vi_state != VS_RECLAIMED)
 	    return false;
 
 	ip = VTOI(vp);
