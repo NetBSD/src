@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.47 2026/10/20 11:49:20 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.48 2026/11/26 11:11:30 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.47 2026/10/20 11:49:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.48 2026/11/26 11:11:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ struct r128fb_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
-	int sc_mode;
+	int sc_mode, sc_video;
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -130,6 +130,7 @@ static void	r128fb_brightness_down(device_t);
 static void	r128fb_set_backlight(struct r128fb_softc *, int);
 /* turn backlight on and off without messing with the level */
 static void	r128fb_switch_backlight(struct r128fb_softc *, int);
+static void	r128fb_set_video(struct r128fb_softc *, int);
 
 struct wsdisplay_accessops r128fb_accessops = {
 	r128fb_ioctl,
@@ -262,6 +263,9 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		      WSSCREEN_RESIZE,
 		NULL
 	};
+
+	sc->sc_video = WSDISPLAYIO_VIDEO_ON;
+
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
@@ -466,6 +470,13 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
+	case WSDISPLAYIO_GVIDEO:
+		*(unsigned *)data = sc->sc_video;
+		return 0;
+
+	case WSDISPLAYIO_SVIDEO:
+		r128fb_set_video(sc, *(unsigned int *)data);
+		return 0;
 	}
 	return EPASSTHROUGH;
 }
@@ -1121,6 +1132,27 @@ r128fb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	}
 }
 
+
+static void
+r128fb_set_video(struct r128fb_softc *sc, int on)
+{
+	uint32_t reg;
+	uint32_t mask = R128_CRTC_HSYNC_DIS | R128_CRTC_VSYNC_DIS | R128_CRTC_DISPLAY_DIS;
+
+	if (sc->sc_video == on) return;
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_CRTC_EXT_CNTL);
+	if (on == WSDISPLAYIO_VIDEO_OFF) {
+		sc->sc_video = on;
+		reg |= mask;
+	} else {
+		sc->sc_video = WSDISPLAYIO_VIDEO_ON;
+		reg &= ~mask;
+	}
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_CRTC_EXT_CNTL, reg);
+	if (sc->sc_have_backlight)
+		r128fb_switch_backlight(sc, on);
+}
+
 static void
 r128fb_set_backlight(struct r128fb_softc *sc, int level)
 {
@@ -1164,7 +1196,6 @@ r128fb_switch_backlight(struct r128fb_softc *sc, int on)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
 	DPRINTF("backlight state: %d reg %08x\n", on, reg);
 }
-	
 
 static void
 r128fb_brightness_up(device_t dev)
