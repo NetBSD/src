@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.20 2026/11/26 11:35:26 uwe Exp $
+.\"	$NetBSD: libsaslc.3,v 1.21 2026/11/26 12:18:07 uwe Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -521,7 +521,7 @@ it should be set before the first call to
 .Fn saslc_sess_cont .
 .Po
 Also see the environment variable
-.Ev SASLC_ENV_DEBUG
+.Ev SASLC_DEBUG
 in the
 .Sx ENVIRONMENT
 section below.
@@ -616,21 +616,23 @@ files.
 .
 .Sh ENVIRONMENT
 .
-The following environment variables
-.Pq defined in In saslc.h
-affect the behavior of the library:
-.Bl -tag -width indent
-.It Ev SASLC_ENV_CONFIG Po Qo SASLC_CONFIG Qc Pc
-If the environment variable
-.Ev SASLC_CONFIG
-is set it overrides the default configuration file location of
-.Pa /etc/saslc.d .
-This may be overridden by
-.Fn saslc_init .
-.It Ev SASLC_ENV_DEBUG Po Qo SASLC_DEBUG Qc Pc
-If set, turn on debugging messages.
-This turns on debugging as early as possible and is a global setting.
+.Bl -tag -width Ev
+.It Ev SASLC_CONFIG
+Override the location of the default configuration directory
+.Pq Pa /etc/saslc.d .
+Note that an explicit
+.Fa cfgpath
+argument to
+.Fn saslc_init
+always takes precedence.
+.
+.It Ev SASLC_DEBUG
+Turn on debugging messages.
+See also
+.Dv SASLC_PROP_DEBUG
+property.
 .El
+.
 .Sh GSSAPI AND KERBEROS
 The following is a minimal
 .Pq Heimdal
