@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.19 2026/11/26 10:27:04 uwe Exp $
+.\"	$NetBSD: libsaslc.3,v 1.20 2026/11/26 11:35:26 uwe Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,6 +39,7 @@
 .Nm saslc_alloc ,
 .Nm saslc_end ,
 .Nm saslc_init ,
+.Nm saslc_strerror
 .Nm saslc_sess_init ,
 .Nm saslc_sess_end ,
 .Nm saslc_sess_getprop ,
@@ -48,7 +49,6 @@
 .Nm saslc_sess_encode ,
 .Nm saslc_sess_getmech ,
 .Nm saslc_sess_strerror ,
-.Nm saslc_strerror
 .
 .Nd Simple Authentication and Security Layer client library
 .
@@ -70,6 +70,9 @@ libsaslc, \-lsaslc
 .Fa   "const char *appname"
 .Fa   "const char *cfgpath"
 .Fc
+.
+.Ft const char *
+.Fn saslc_strerror "saslc_t *ctx"
 .
 .Ft saslc_sess_t *
 .Fo saslc_sess_init
@@ -127,9 +130,6 @@ libsaslc, \-lsaslc
 .Ft const char *
 .Fn saslc_sess_strerror "saslc_sess_t *sess"
 .
-.Ft const char *
-.Fn saslc_strerror "saslc_t *ctx"
-.
 .Sh DESCRIPTION
 .
 The
@@ -146,63 +146,66 @@ The following functions are available in the library.
 .Bl -tag -width Fn
 .
 .It Fn saslc_alloc ""
-The
-.Fn saslc_alloc
-function allocates and returns a new saslc context.
-The context is uninitialized: see
+Allocate a new saslc context.
+The context is
+.Em not
+initialized, see
 .Fn saslc_init .
+.Pp
 Returns
 .Dv NULL
 on error.
 .
 .It Fn saslc_end "ctx"
-The
-.Fn saslc_end
-function destroys and deallocate resources used by the context
-.Fa ctx .
+Destroy the context
+.Fa ctx
+and deallocate resources used by it.
 The context shouldn't have any sessions assigned to it.
+.Pp
 Returns 0 on success and \-1 if the context has active sessions and
 cannot be deallocated.
 .
 .It Fn saslc_init "ctx" "appname" "cfgpath"
-The
-.Fn saslc_init
-function initializes the saslc context
+Initialize the saslc context
 .Fa ctx .
-Based on the application name
-.Fa appname ,
-it also parses the configuration files as indicated by
-.Fa cfgpath ,
-sets up the context and mechanism dictionaries, and creates mechanism
+Parse the configuration files for the application
+.Fa appname
+under
+.Fa cfgpath .
+Set up the context and mechanism dictionaries, and create mechanism
 list for the context.
-If
+When
 .Fa cfgpath
 is
 .Dv NULL ,
-it checks the environment variable
-.Ev SASLC_CONFIG
-for a location and if that is not found it uses the default path
+check the environment variable
+.Ev SASLC_CONFIG ,
+otherwise use the default path
 .Pa /etc/saslc.d .
+.Pp
 Returns 0 on success and \-1 on failure.
 .
+.It Fn saslc_strerror "ctx"
+Return the error message string for the last error in the context.
+Never returns
+.Dv NULL .
+.
 .It Fn saslc_sess_init "ctx" "mechs" "secopts"
-The
-.Fn saslc_sess_init
-function creates new session assigned to the
-.Fa ctx
-context.
-The function chooses the mechanism to use for authentication from the
+Create new session assigned to the context
+.Fa ctx .
+Choose the mechanism to use for authentication from the list
 .Fa mechs
-list taking into account the requirements from the
+as constrained by the requirements from the
 .Fa secopts
 list.
-Both lists may be space or comma delimited.
+Both lists can use spaces or commas as the separator.
 The first matching mechanism from the
-.Ar mechs
+.Fa mechs
 list is used.
 See
 .Sx Configuration
 below for the supported mechanisms.
+.Pp
 The valid security options are
 .Pp
 .Bl -tag -width Li -offset indent -compact
@@ -219,68 +222,67 @@ require mutual authentication mechanisms
 .El
 .Pp
 Unknown security options are ignored.
+.Pp
 Returns a session handle or
 .Dv NULL
 on error or no match.
 .
 .It Fn saslc_sess_end "sess"
-The
-.Fn saslc_sess_end
-function ends the sasl session
+End the
+.Tn SASL
+session
 .Fa sess .
-It destroys and deallocates all internal resources.
+Destroy and deallocate all internal resources.
 This does not fail.
 .
 .It Fn saslc_sess_getprop "sess" "key"
-The
-.Fn saslc_sess_getprop
-function gets the property indicated by the
+Get the property
 .Fa key
 from the saslc dictionaries.
-Dictionaries are searched in following order: session
-.Fa sess
-dictionary,
-context dictionary (global configuration), and mechanism dictionary.
+Dictionaries are searched in following order:
+session dictionary,
+context dictionary (global configuration),
+and mechanism dictionary.
+.Pp
 Returns the property value or
 .Dv NULL
 if the property is not found.
 .
 .It Fn saslc_sess_setprop "sess" "key" "value"
-The
-.Fn saslc_sess_setprop
-function sets the property indexed by
+Set the property
 .Fa key
 to the value
 .Fa value
-in the session
-.Fa sess
-dictionary.
-If the property already exists in the session dictionary, then the
-previous value is replaced by the new value.
+in the session dictionary
+of the session
+.Fa sess .
+If the property already exists, the previous value is replaced.
 If
 .Fa value
 is
 .Dv NULL ,
-then any previous value in the session dictionary is removed.
+the
+.Fa key
+is removed from the session dictionary.
+.Pp
 Returns 0 on success or \-1 on failure.
 .
 .It Fn saslc_sess_cont "sess" "in" "inlen" "out" "outlen"
-The
-.Fn saslc_sess_cont
-function performs one step of the sasl authentication.
-It reads
+Perform one step of the sasl authentication.
+Read
 .Fa inlen
 bytes of input data
 .Pq from the server
 from the
 .Fa in
-buffer and stores
+buffer and store
 .Fa outlen
 bytes of output data in
 .Fa out
 .Pq for the server .
 The user is responsible for freeing memory allocated for
 .Fa out .
+.Pp
 It returns 0 if the authentication process is completed, 1 if another
 step is required, and \-1 on error.
 Note that the completion of authentication process does not mean the
@@ -347,26 +349,12 @@ In this case,
 returns the number of bytes that were flushed from the internal buffer.
 .
 .It Fn saslc_sess_getmech "sess"
-The
-.Fn saslc_sess_getmech
-function returns the name of the mechanism used in the session
-.Fa sess .
-The function does not fail.
+Return the name of the mechanism used in the session.
+This function does not fail.
 .
 .It Fn saslc_sess_strerror "sess"
-The
-.Fn saslc_sess_strerror
-returns the error message associated with the session
-.Fa sess .
-.
-.It Fn saslc_strerror "ctx"
-The
-.Fn saslc_strerror
-function operates as
-.Fn saslc_sess_strerror ,
-but instead returns the error message string for the last error in the context
-.Fa ctx .
-Neither function will ever return
+Return the error message associated with the session.
+Never returns
 .Dv NULL .
 .El
 .Ss Configuration
