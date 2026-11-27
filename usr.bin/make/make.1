@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.396 2026/09/21 04:10:03 sjg Exp $
+.\"	$NetBSD: make.1,v 1.397 2026/11/27 21:02:09 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd September 11, 2026
+.Dd November 26, 2026
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -2741,6 +2741,182 @@ environment variable is set to
 any stack traces include the call chain of the parent processes.
 .\" .Sh EXIT STATUS
 .\" .Sh ENVIRONMENT
+.Sh META MODE
+If the word
+.Ql meta
+appears in
+.Va .MAKE.MODE ,
+.Nm
+will enter meta mode.
+.Pp
+In meta mode; provided
+.Sq Va .OBJDIR
+is not the same as
+.Sq Va .CURDIR
+or the expression
+.Ql currdirok=yes
+appears in
+.Va .MAKE.MODE ,
+.Nm
+will create a meta file for each target.
+This meta file is named for the target plus the extension
+.Ql .meta .
+.Nm
+will record:
+.Bl -tag -width Ds
+.It # Meta
+The rest of the line is the
+.Xr realpath 3
+of the meta file.
+This is useful when the meta file has been copied by
+.Va .ERROR_TARGET .
+.It Li CMD
+The expanded command line(s) to be executed
+(so they can later be compared)
+.It Li CWD
+The current working directory.
+This should normally be
+.Sq Va .OBJDIR .
+.It Li TARGET
+The target to be built.
+.It Li OODATE
+The value of
+.Ic .OODATE .
+If not empty,
+this indicates the normal target rules deemed the target out-of-date.
+More on this below.
+.It Li -- command output --
+A marker to separate the commands from their output.
+This information is not used by
+.Nm
+itself, but is very useful for triaging build issues.
+.It Li -- filemon acquired metadata --
+A marker to indicate the start of the system call trace
+for generating or updating the target.
+.Pp
+The first is always:
+.Bl -tag -width Ds
+.It Li V Ar version
+The version of the
+.Xr filemon 4
+format.
+.El
+.Pp
+The remaining record types are:
+.Bl -tag -width Ds
+.It Li C Ar pid Ar path
+.Xr chdir 2 ,
+.Nm
+needs to track this per process to determine the absolute path
+of files opened via a relative path.
+.It Li E Ar pid Ar path
+.Xr execv 2 .
+.It Li F Ar pid Ar child
+.Xr fork 2 ,
+.Xr vfork 2 .
+.It Li L Ar pid Ar src Ar dest
+.Xr link 2 ,
+.Xr symlink 2 .
+.It Li M Ar pid Ar old Ar new
+.Xr rename 2 .
+.It Li R Ar pid Ar path
+.Xr open 2
+for reading.
+.It Li W Ar pid Ar path
+.Xr open 2
+for writing.
+.It Li S Ar pid Ar path
+.Xr lstat 2 ,
+.Xr stat 2 .
+.Pp
+Not all versions of
+.Xr filemon 4
+record this.
+.It Li X Ar pid Ar status
+.Xr exit 2 .
+.El
+.Pp
+These records are examined by
+.Nm
+when the normal rules indicate the target is up-to-date.
+.El
+.Pp
+When the normal target rules indicate a target is up-to-date,
+.Nm
+will examine the meta file.
+Examination ends as soon as the target is deemed out-of-date.
+.Pp
+The steps are:
+.Bl -enum -width Ds
+.It
+Unless the target is marked
+.Ic .NOMETA_CMP ,
+compare the commands to be executed with those recorded in the
+meta file.
+.Pp
+Any command that includes a reference to
+.Va .OODATE
+is not compared.
+As noted above this can be leveraged to avoid comparison by using
+a reference like:
+.Ql ${.OODATE:M}
+in a command.
+.Pp
+If there is any change,
+the target is out-of-date.
+.It
+Examine the system call trace.
+If any file executed or read is newer than the target,
+it is out-of-date.
+.It
+If
+.Va .MAKE.META.BAILIWICK
+is set;
+if any file written within that scope is now missing,
+the target is out-of-date.
+.El
+.Pp
+This inspection of system calls, helps ensure that targets are
+updated more reliably, and avoids the need to do things like
+making targets depend on all makefiles on the off chance they
+contain something that may impact the target.
+.Pp
+However, this deep inspection, can lead to situations where a target is
+.Em always ,
+considered out-of-date.
+To mitigate this,
+.Nm
+provides a number of methods to filter or exclude paths
+from this inspection.
+See references to variables prefixed
+.Va .MAKE.META.
+above.
+.Pp
+Since in meta mode,
+.Nm
+records all command output in the meta files,
+there is no need to write them to stdout as well.
+Thus by default
+.Nm
+will only output lines like:
+.Bd -literal -offset indent
+Building ${.OBJDIR:tA}/${.TARGET}
+.Ed
+.Pp
+This actually speeds up the build when output is going to a terminal.
+.Pp
+Further,
+on failure of a target,
+.Va .ERROR_META_FILE
+is set to the path of the failing meta file, and the
+.Ic .ERROR
+target can copy it to a well known location
+such as:
+.Ql ${SRCTOP:H}/error/meta-${.MAKE.PID}.log .
+The presence of such a file reliably indicates why
+the build failed.
+.Pp
+This greatly assists in triaging build failures.
 .Sh FILES
 .Bl -tag -width /usr/share/mk -compact
 .It .depend
