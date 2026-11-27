@@ -117,6 +117,7 @@
 ./usr/libdata/debug/usr/tests/lib/libnvmm
 ./usr/libdata/debug/usr/tests/lib/libobjc
 ./usr/libdata/debug/usr/tests/lib/libossaudio
+./usr/libdata/debug/usr/tests/lib/libpam
 ./usr/libdata/debug/usr/tests/lib/libposix
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1
@@ -334,6 +335,7 @@
 ./usr/tests/lib/libnvmm
 ./usr/tests/lib/libobjc
 ./usr/tests/lib/libossaudio
+./usr/tests/lib/libpam
 ./usr/tests/lib/libposix
 ./usr/tests/lib/libposix/bsd
 ./usr/tests/lib/libposix/posix1
