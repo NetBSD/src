@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.41 2026/11/25 07:11:25 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.42 2026/11/27 21:14:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.41 2026/11/25 07:11:25 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.42 2026/11/27 21:14:25 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -1284,6 +1284,107 @@ identify_dfr0(const char *cpuname, uint64_t dfr0, uint64_t dfr1)
 	    id_aa64dfr0_fieldinfo, dfr0);
 }
 
+/* ID_AA64MMFR2_EL1 - AArch64 Memory Model Feature Register 2 */
+struct fieldinfo id_aa64mmfr2_fieldinfo[] = {
+	{
+		FIELDINFO(0, 4, "CnP") {
+			[0] = "Common not Private translations not supported.",
+			[1] = "Common not Private translations supported.",
+		}
+	},
+	{
+		FIELDINFO(4, 4, "UAO") {
+			[0] = "User Access Override not supported.",
+			[1] = "User Access Override supported.",
+		}
+	},
+	{
+		FIELDINFO(8, 4, "LSM") {
+			[0] = "AArch32 Load/Store multiple controls not supported.",
+			[1] = "AArch32 Load/Store multiple controls supported. (FEAT_LSMAOC)",
+		}
+	},
+	{
+		FIELDINFO(12, 4, "IESB") {
+			[0] = "Implicit error synchronization event at exception entry and return not supported.",
+			[1] = "Implicit error synchronization event at exception entry and return supported. (FEAT_IESB)",
+		}
+	},
+	{
+		FIELDINFO(16, 4, "VARange") {
+			[0] = "VMSAv8-64 supports 48-bit VAs.",
+			[1] = "VMSAv8-64 supports 52-bit VAs (64KB translation granule). (FEAT_LVA)",
+			[2] = "VMSAv9-128 supports 56-bit VAs. (FEAT_LVA3)",
+		}
+	},
+	{
+		FIELDINFO(20, 4, "CCIDX") {
+			[0] = "32-bit format implemented for all levels of the CCSIDR_EL1.",
+			[1] = "64-bit format implemented for all levels of the CCSIDR_EL1. (FEAT_CCIDX)",
+		}
+	},
+	{
+		FIELDINFO(24, 4, "NV") {
+			[0] = "Nested Virtualization is not supported.",
+			[1] = "Nested Virtualization is supported. (FEAT_NV).",
+			[2] = "Nested Virtualization is supported. (FEAT_NV2).",
+		}
+	},
+	{
+		FIELDINFO(28, 4, "ST") {
+			[0] = "Small translation tables are not supported.",
+			[1] = "Small translation tables are supported. (FEAT_TTST)",
+		}
+	},
+	{
+		FIELDINFO(32, 4, "AT") {
+			[0] = "Unaligned single-copy atomicity and atomic functions are not supported.",
+			[1] = "Unaligned single-copy atomicity and atomic functions are supported. (FEAT_LSE2)",
+		}
+	},
+	{
+		FIELDINFO(36, 4, "IDS") {
+			[0] = "Feature ID space exception EC syndrome is 0.",
+			[1] = "Feature ID space exception EC syndrome is 0x18. (FEAT_IDST)",
+			[2] = "Feature ID space exception EC sundrome is 0x18 "
+			      "and EL3 is supported. (FEAT_IDST3)",
+		}
+	},
+	{
+		FIELDINFO(40, 4, "FWB") {
+			[0] = "Stage 2 forced Write-Back not supported.",
+			[1] = "Stage 2 forced Write-Back is supported. (FEAT_S2FWB)",
+		}
+	},
+	{
+		FIELDINFO(48, 4, "TTL") {
+			[0] = "TLB maintenance instructions do not support Translation Table Level.",
+			[1] = "TLB maintenance instructions support Translation Table Level. (FEAT_TTL)",
+		}
+	},
+	{
+		FIELDINFO(52, 4, "BBM") {
+			[0] = "Break-before-make sequence must be used.",
+			[1] = "Level 1 support for changing block size is supported. (FEAT_BBML1)",
+			[2] = "Level 2 support for changing block size is supported. (FEAT_BBML2)",
+		}
+	},
+	{
+		FIELDINFO(56, 4, "EVT") {
+			[0] = "HCR_EL2.{TTLBOS, TTLBIS, TOCU, TICAB, TID4} traps are not supported.",
+			[1] = "HCR_EL2.{TOCU, TICAB, TID4} traps are supported. (FEAT_EVT)",
+			[2] = "HCR_EL2.{TTLBOS, TTLBIS, TOCU, TICAB, TID4} traps are supported. (FEAT_EVT2)",
+		}
+	},
+	{
+		FIELDINFO(60, 4, "E0PD") {
+			[0] = "E0PDx mechanism is not implemented.",
+			[1] = "E0PDx mechanism is implemented. (FEAT_E0PD)",
+		}
+	},
+	{ .bitwidth = 0 }	/* end of table */
+};
+
 void
 identifycpu(int fd, const char *cpuname)
 {
@@ -1350,6 +1451,8 @@ identifycpu(int fd, const char *cpuname)
 	    id_aa64mmfr0_fieldinfo, id->ac_aa64mmfr0);
 	print_fieldinfo(cpuname, "memory model 1",
 	    id_aa64mmfr1_fieldinfo, id->ac_aa64mmfr1);
+	print_fieldinfo(cpuname, "memory model 2",
+	    id_aa64mmfr2_fieldinfo, id->ac_aa64mmfr2);
 	print_fieldinfo(cpuname, "processor feature 0",
 	    id_aa64pfr0_fieldinfo, id->ac_aa64pfr0);
 	print_fieldinfo(cpuname, "processor feature 1",
