@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.358 2026/11/26 23:30:25 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.359 2026/11/27 19:57:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.358 2026/11/26 23:30:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.359 2026/11/27 19:57:44 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -402,11 +402,9 @@ lfs_fsync(void *v)
 	if (fs->lfs_ronly)
 		goto out;
 
-#if 0
 	/* If a removed vnode is being cleaned, no need to sync here. */
 	if ((ap->a_flags & FSYNC_RECLAIM) != 0 && ip->i_mode == 0)
 		goto out;
-#endif
 
 	/*
 	 * Trickle sync simply adds this vnode to the pager list, as if
@@ -444,16 +442,9 @@ lfs_fsync(void *v)
 	if (error)
 		goto out;
 
-	if ((ap->a_flags & FSYNC_DATAONLY) == 0) {
-		bool dirtyblks = false;
-		mutex_enter(vp->v_interlock);
-		dirtyblks = !LIST_EMPTY(&vp->v_dirtyblkhd);
-		mutex_exit(vp->v_interlock);
-		if ((ip->i_flags & IN_MODIFIED) || dirtyblks) {
-			error = lfs_update(vp, NULL, NULL,
-					   wait ? UPDATE_WAIT : 0);
-		}
-	}
+	if ((ap->a_flags & FSYNC_DATAONLY) == 0
+	    && (ip->i_flags & IN_MODIFIED))
+		error = lfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;

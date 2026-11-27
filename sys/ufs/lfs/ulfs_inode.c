@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.28 2026/11/27 07:16:00 perseant Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.29 2026/11/27 19:57:45 perseant Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.28 2026/11/27 07:16:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.29 2026/11/27 19:57:45 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -122,8 +122,6 @@ ulfs_inactive(void *v)
 	}
 
 out:
-	KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
-
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
