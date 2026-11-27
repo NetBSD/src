@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.29 2026/09/29 18:46:38 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.30 2026/11/27 08:40:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.29 2026/09/29 18:46:38 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.30 2026/11/27 08:40:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -323,7 +323,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 //	uvm_md_init();
 
 	/* init the lock */
-	// XXXNH per cpu?
 	pmap_tlb_info_init(&pmap_tlb0_info);
 
 	VPRINTF("ASID max %x ", pmap_tlb0_info.ti_asid_max);
