@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.15 2026/06/24 13:51:21 skrll Exp $	*/
+/*	$NetBSD: start.S,v 1.16 2026/11/27 14:17:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -33,7 +33,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: start.S,v 1.15 2026/06/24 13:51:21 skrll Exp $")
+RCSID("$NetBSD: start.S,v 1.16 2026/11/27 14:17:24 skrll Exp $")
 
 /*
  * Padding at start of kernel image to make room for 64-byte header
@@ -56,7 +56,7 @@ start:
 	 * x9 = (x8 + L2_SIZE - 1) & -L2_SIZE = new (aligned) loaded address
 	 */
 	adrl	x8, .header
-	mov	x9, #(L2_SIZE-1)
+	mov	x9, #(L2_SIZE - 1)
 	add	x9, x9, x8
 	and	x9, x9, #-L2_SIZE
 	cmp	x8, x9
@@ -131,13 +131,13 @@ start:
 
 	/* address of uboot_args (relative) */
 	adrl	x8, uboot_args
-	str	x0, [x8, #(8*0)]
-	str	x1, [x8, #(8*1)]
-	str	x2, [x8, #(8*2)]
-	str	x3, [x8, #(8*3)]
+	str	x0, [x8, #(8 * 0)]
+	str	x1, [x8, #(8 * 1)]
+	str	x2, [x8, #(8 * 2)]
+	str	x3, [x8, #(8 * 3)]
 
 	/*
-	 * ARM64 boot protocol has FDT address in x0 *
+	 * ARM64 boot protocol has FDT address in x0
 	 */
 	adrl	x8, fdt_addr_r
 	str	x0, [x8]
