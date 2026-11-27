@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.33 2026/11/24 07:04:58 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.34 2026/11/27 10:07:04 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -1457,3 +1457,16 @@ UPDATING					(manually edited)
 
 	Note clean build required by ticket #1422.
 	[martin]
+
+sys/ufs/ffs/ffs_snapshot.c			1.158
+
+	ffs: PR 60621: fix "ufs_inactive: dirty filesystem?"
+	panic.
+	[hannken, ticket #1424]
+
+sys/kern/vfs_wapbl.c				1.118 (patch)
+
+	ffs: PR 47146, PR 60621: mitigate "transaction too big"
+	WAPBL failures.
+	[hannken, ticket #1425]
+
