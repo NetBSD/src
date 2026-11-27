@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.177 2026/09/08 02:02:02 gutteridge Exp $
+.\"	$NetBSD: sysctl.7,v 1.178 2026/11/27 01:11:50 gutteridge Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 7, 2026
+.Dd November 27, 2026
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -344,6 +344,7 @@ privilege may change the value.
 .It kern.monotonic_clock	integer	no
 .It kern.mqueue	node	not applicable
 .It kern.msgbuf	integer	no
+.It kern.msgbuf_clear	integer	yes
 .It kern.msgbufsize	integer	no
 .It kern.ngroups	integer	no
 .\".It kern.no_sa_support	integer	yes
@@ -938,6 +939,8 @@ The maximum number of messages in a message queue.
 The kernel message buffer, rotated so that the head of the circular kernel
 message buffer is at the start of the returned data.
 The returned data may contain NUL bytes.
+.It Li kern.msgbuf_clear ( Dv KERN_MSGBUFCLR )
+If set to non-zero, clears the kernel message buffer.
 .It Li kern.msgbufsize ( Dv KERN_MSGBUFSIZE )
 The maximum number of characters that the kernel message buffer can hold.
 .It Li kern.ngroups ( Dv KERN_NGROUPS )
