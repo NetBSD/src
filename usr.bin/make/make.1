@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.397 2026/11/27 21:02:09 sjg Exp $
+.\"	$NetBSD: make.1,v 1.398 2026/11/27 23:56:47 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2764,24 +2764,25 @@ This meta file is named for the target plus the extension
 .Nm
 will record:
 .Bl -tag -width Ds
-.It # Meta
-The rest of the line is the
+.It Li # Meta Ar path
+Records the 
 .Xr realpath 3
 of the meta file.
-This is useful when the meta file has been copied by
-.Va .ERROR_TARGET .
-.It Li CMD
-The expanded command line(s) to be executed
-(so they can later be compared)
-.It Li CWD
+This is useful when it has been copied by
+.Ic .ERROR
+target.
+.It Li CMD Ar command
+The expanded command line(s) each prefixed with
+.Li CMD ,
+to be executed
+(so they can later be compared).
+.It Li CWD Ar path
 The current working directory.
 This should normally be
 .Sq Va .OBJDIR .
-.It Li TARGET
-The target to be built.
-.It Li OODATE
-The value of
-.Ic .OODATE .
+.It Li TARGET Va ${.TARGET}
+The target being built.
+.It Li OODATE Va ${.OODATE}
 If not empty,
 this indicates the normal target rules deemed the target out-of-date.
 More on this below.
@@ -2794,8 +2795,16 @@ itself, but is very useful for triaging build issues.
 A marker to indicate the start of the system call trace
 for generating or updating the target.
 .Pp
-The first is always:
+The first entries are always:
 .Bl -tag -width Ds
+.It Li # filemon version Ar version
+.It Li # Target pid Ar pid
+.It Li # Start Ar timestamp
+The
+.Ar timestamp
+at beining and end,
+provides seconds and microsecods,
+and allow for analysis of how long a target took to build.
 .It Li V Ar version
 The version of the
 .Xr filemon 4
@@ -2834,6 +2843,14 @@ Not all versions of
 record this.
 .It Li X Ar pid Ar status
 .Xr exit 2 .
+.El
+.Pp
+The last entries in the meta file should be:
+.Bl -tag -width Ds
+.It Li # Stop Ar timestamp
+.It Li # Bye bye
+Which indicates that the system call trace should be complete,
+and thus can be relied upon for determining directory dependencies.
 .El
 .Pp
 These records are examined by
