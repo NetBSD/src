@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.320 2026/11/26 23:29:37 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.321 2026/11/27 07:16:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.320 2026/11/26 23:29:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.321 2026/11/27 07:16:00 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -402,7 +402,10 @@ lfs_vflush(struct vnode *vp)
 	while (vp->v_numoutput > 0) {
 		cv_wait(&vp->v_cv, vp->v_interlock);
 	}
+#if 0
+	/* Depending on calling semantics we might not flush indirects */
 	KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
+#endif
 	KASSERT(vp->v_numoutput == 0);
 	mutex_exit(vp->v_interlock);
 
