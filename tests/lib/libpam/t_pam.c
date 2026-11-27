@@ -97,7 +97,7 @@ ATF_TC_BODY(krb5_missing_keytab, tc)
 	ATF_REQUIRE_EQ(0, setenv("KRB5_KTNAME", "FILE:./missing.keytab", 1));
 
 	/* Reject authentication before prompting or contacting a KDC. */
-	check_authentication("pam_krb5", PAM_SERVICE_ERR);
+	check_authentication("pam_krb5 no_warn", PAM_SERVICE_ERR);
 }
 #endif
 
