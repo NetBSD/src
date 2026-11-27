@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2026/11/21 17:39:39 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 2026/11/27 13:08:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -153,7 +153,7 @@ struct cpu_info {
 	 */
 	volatile int    ci_want_resched	/* [MI] preempt current process */
 			    __aligned(16);
-	int		ci__rsvd1;
+	volatile u_int	ci_ipis;	/*      IPIs pending */
 	int		ci__spare0;
 	int		ci__spare1;
 
@@ -167,11 +167,23 @@ struct cpu_info {
 	struct cpu_info *ci_next;
 	struct cpu_info *ci_self;	/*      always points to real address */
 	int		ci_flags;
+	struct trapframe *ci_db_regs;	/*      registers for debuggers */
+
+	/*
+	 * The following are primarily private.
+	 */
 
 	/* VM / pmap-related data */
-	vaddr_t		ci_tmpva_vmmap;	/*      general tmp VA */
+	vaddr_t		ci_tmpva_vmmap	/*      general tmp VA */
+			    __aligned(16);
 	vaddr_t		ci_tmpva_src;	/*      for pmap_copy_page()... */
 	vaddr_t		ci_tmpva_dst;	/*      ...and pmap_zero_page() */
+
+	void *		ci_ipi_data;	/*      IPI data/stats */
+
+#if defined(GPROF) && defined(MULTIPROCESSOR)
+	struct gmonparam *ci_gmon;	/* [MI] per-cpu GPROF */
+#endif
 };
 #endif /* _KERNEL || _KMEMUSER */
 
@@ -237,30 +249,9 @@ struct clockframe {
 		(l)->l_md.md_astpending = 1; cpu_set_hw_ast(l);		\
 	} while (/*CONSTCOND*/0)
 
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-#define	cpu_need_resched(ci, l, flags)					\
-	do {								\
-		__USE(ci); __USE(flags); cpu_set_ast(l);		\
-	} while (/*CONSTCOND*/0)
-
-/*
- * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On m68k, request an ast to send us through
- * trap, marking the proc as needing a profiling tick.
- */
-#define	cpu_need_proftick(l)						\
-	do {								\
-		(l)->l_pflag |= LP_OWEUPC; cpu_set_ast(l);		\
-	} while (/*CONSTCOND*/0)
-
-/*
- * Notify the current process (p) that it has a signal pending,
- * process as soon as possible.
- */
-#define	cpu_signotify(l)	cpu_set_ast(l)
+void	cpu_need_resched(struct cpu_info *, struct lwp *, int);
+void	cpu_signotify(struct lwp *);
+void	cpu_need_proftick(struct lwp *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.29 2026/11/15 15:16:24 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.30 2026/11/27 13:08:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2026 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.29 2026/11/15 15:16:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.30 2026/11/27 13:08:47 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -769,3 +769,79 @@ __CTASSERT(sizeof(struct cpu_info) <= 2048);
 
 /* List of all CPUs present on the system. */
 struct cpu_info *cpu_info_list = &cpu_info_primary;
+
+#if defined(MULTIPROCESSOR)
+#ifdef __HAVE_M68K_HW_AST
+#error __HAVE_M68K_HW_AST incompatible with MULTIPROCESSOR
+#endif
+static inline void
+cpu_kick(struct cpu_info * const ci)
+{
+	cpu_send_ipi(ci->ci_cpuid, _IPI_AST);
+}
+#endif
+
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+void
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
+{
+	KASSERT(kpreempt_disabled());
+
+	if ((flags & RESCHED_IDLE) != 0) {
+#ifdef MULTIPROCESSOR
+		if (flags & RESCHED_REMOTE) {
+			/*
+			 * If any m68k MP hardware has a stay-off-the-bus
+			 * idle mode (lolol low-power mode), we would need
+			 * to kick it here.
+			 */
+		}
+#endif
+		return;
+	}
+
+	/* XXX RESCHED_KPREEMPT XXX */
+
+	KASSERT((flags & RESCHED_UPREEMPT) != 0);
+#if defined(MULTIPROCESSOR)
+	if ((flags & RESCHED_REMOTE) != 0) {
+		cpu_kick(ci);
+	} else
+#endif
+		cpu_set_ast(l);
+}
+
+/*
+ * Notify the current lwp (l) that it has a signal pending
+ * process as soon as possible.
+ */
+void
+cpu_signotify(struct lwp *l)
+{
+	KASSERT(kpreempt_disabled());
+
+#if defined(MULTIPROCESSOR)
+	if (l->l_cpu != curcpu()) {
+		cpu_kick(l->l_cpu);
+	} else
+#endif
+		cpu_set_ast(l);
+}
+
+/*
+ * Give a profiling tick to the current process when the user profiling
+ * buffer pages are invalid.  On m68k, request an ast to send us through
+ * trap, marking the proc as needing a profiling tick.
+ */
+void
+cpu_need_proftick(struct lwp *l)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(l->l_cpu == curcpu());
+
+	(l)->l_pflag |= LP_OWEUPC;
+	cpu_set_ast(l);
+}
