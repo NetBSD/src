@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.2,v 1.1.2.5 2026/11/25 09:14:12 martin Exp $
+# $NetBSD: CHANGES-11.2,v 1.1.2.6 2026/11/27 10:04:31 martin Exp $
 
 A complete list of changes between the 11.1 release on 2026-11-02
 until the 11.2 release:
@@ -132,4 +132,17 @@ UPDATING					(manually edited)
 
 	Note ssp changes (ticket #579) need a full rebuild.
 	[martin]
+
+sys/ufs/ffs/ffs_snapshot.c			1.158
+
+	ffs: PR 60621: fix "ufs_inactive: dirty filesystem?"
+	panic.
+	[hannken, ticket #585]
+
+sys/kern/vfs_wapbl.c				1.118
+
+	ffs: PR 47146, PR 60621: mitigate "transaction too big"
+	WAPBL failures.
+	[hannken, ticket #586]
+
 
