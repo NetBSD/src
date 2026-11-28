@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.398 2026/11/27 23:56:47 sjg Exp $
+.\"	$NetBSD: make.1,v 1.399 2026/11/28 01:12:28 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2850,15 +2850,17 @@ The last entries in the meta file should be:
 .It Li # Stop Ar timestamp
 .It Li # Bye bye
 Which indicates that the system call trace should be complete,
-and thus can be relied upon for determining directory dependencies.
+and can thus be relied upon for determining directory dependencies
+.Pq Va DIRDEPS .
+.Pp
+Any file read or executed from outside
+.Va .OBJDIR ,
+is a potential
+.Va DIRDEP .
+.El
 .El
 .Pp
-These records are examined by
-.Nm
-when the normal rules indicate the target is up-to-date.
-.El
-.Pp
-When the normal target rules indicate a target is up-to-date,
+When the normal dependency rules indicate a target is up-to-date,
 .Nm
 will examine the meta file.
 Examination ends as soon as the target is deemed out-of-date.
@@ -2874,10 +2876,9 @@ meta file.
 Any command that includes a reference to
 .Va .OODATE
 is not compared.
-As noted above this can be leveraged to avoid comparison by using
-a reference like:
+This can be leveraged to avoid comparison by using a reference like:
 .Ql ${.OODATE:M}
-in a command.
+in a command, to exclude it from comparison without any other effect.
 .Pp
 If there is any change,
 the target is out-of-date.
@@ -2889,7 +2890,7 @@ it is out-of-date.
 If
 .Va .MAKE.META.BAILIWICK
 is set;
-if any file written within that scope is now missing,
+and any file written by this target within that scope is now missing,
 the target is out-of-date.
 .El
 .Pp
@@ -2908,6 +2909,28 @@ from this inspection.
 See references to variables prefixed
 .Va .MAKE.META.
 above.
+.Pp
+To aid in the automated determination of
+.Va DIRDEPS ,
+.Nm
+maintains two lists of meta files:
+.Bl -tag -width Ds
+.It Va .MAKE.META.FILES
+A list of all the meta files examined or updated by
+.Nm .
+.Pp
+This is the list that should be processed for the purpose of determining
+.Va DIRDEPS ,
+so that none are missed, and stale meta files are ignored.
+.It Va .MAKE.META.CREATED
+A list of all the meta files updated by
+.Nm .
+.Pp
+If not empty, this can used to trigger the processing of
+.Va .MAKE.META.FILES
+to extract
+.Va DIRDEPS .
+.El
 .Pp
 Since in meta mode,
 .Nm
