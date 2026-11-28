@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.120 2026/11/26 14:27:03 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.121 2026/11/28 01:35:36 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.120 2026/11/26 14:27:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.121 2026/11/28 01:35:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2721,7 +2721,7 @@ pmap_message_user_acquire(struct pmap_message *pmsg)
 static void
 pmap_message_user_send(struct pmap_message *pmsg)
 {
-	/* XXX */
+	cpu_multicast_ipi(pmsg->pmsg_cpus, _IPI_PMAP_USER);
 }
 
 static void
@@ -2737,29 +2737,21 @@ pmap_message_user_process(void)
 }
 
 static void
-pmap_message_intr_spin_hook(void)
-{
-	/* XXX check for pending IPIs */
-}
-
-static void
 pmap_message_intr_acquire(struct pmap_message *pmsg)
 {
-	pmap_message_acquire_impl(&pmap_intr_msgp, pmsg,
-				  pmap_message_intr_spin_hook);
+	pmap_message_acquire_impl(&pmap_intr_msgp, pmsg, ipi_poll);
 }
 
 static void
 pmap_message_intr_send(struct pmap_message *pmsg)
 {
-	/* XXX */
+	cpu_multicast_ipi(pmsg->pmsg_cpus, _IPI_PMAP_INTR);
 }
 
 static void
 pmap_message_intr_wait(struct pmap_message *pmsg)
 {
-	pmap_message_wait_impl(&pmap_intr_msgp, pmsg,
-			       pmap_message_intr_spin_hook);
+	pmap_message_wait_impl(&pmap_intr_msgp, pmsg, ipi_poll);
 }
 
 void
@@ -2777,7 +2769,7 @@ pmap_message_acquire(struct pmap_message *pmsg)
 static void
 pmap_message_send(struct pmap_message *pmsg)
 {
-	/* XXX */
+	cpu_multicast_ipi(pmsg->pmsg_cpus, _IPI_PMAP);
 }
 
 static void

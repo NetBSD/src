@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2026/11/27 13:08:47 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 2026/11/28 01:35:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -191,6 +191,9 @@ struct cpu_info {
 extern struct cpu_info cpu_info_primary;
 extern struct cpu_info *cpu_info_list;
 extern struct cpu_info cpuinfo;		/* per-CPU alias */
+extern struct cpu_info *cpu_info_tab[];
+extern volatile uint32_t cpus_running;
+extern volatile uint32_t cpus_paused;
 
 #define	CPU_INFO_ITERATOR		int __unused
 #define	CPU_INFO_FOREACH(cii, ci)	ci = cpu_info_list; \
@@ -199,6 +202,7 @@ extern struct cpu_info cpuinfo;		/* per-CPU alias */
 #define	CPU_IS_PRIMARY(ci)		((ci) == &cpu_info_primary)
 
 #define	CPU_F_RUNNING	__BIT(0)	/* CPU is running */
+#define	CPU_F_PAUSED	__BIT(1)	/* CPU is paused */
 
 struct	proc;
 void	cpu_proc_fork(struct proc *, struct proc *);
@@ -252,6 +256,26 @@ struct clockframe {
 void	cpu_need_resched(struct cpu_info *, struct lwp *, int);
 void	cpu_signotify(struct lwp *);
 void	cpu_need_proftick(struct lwp *);
+
+/* IPIs are ordered highest-priority to lowest. */
+#define	_IPI_HALT		0
+#define	_IPI_PMAP_USER		1
+#define	_IPI_PMAP_INTR		2
+#define	_IPI_PMAP		3
+#define	_IPI_AST		4
+#define	_IPI_PAUSE		5
+#define	_IPI_XCALL		5
+#define	_IPI_GENERIC		6
+#define	_NIPIS			(_IPI_GENERIC + 1)
+
+void	cpu_ipi_init(struct cpu_info *);
+void	cpu_ipi_process(struct trapframe *);
+void	cpu_send_ipi(unsigned int, int);
+void	cpu_multicast_ipi(uint32_t, int);
+void	cpu_multicast_ipi(uint32_t, int);
+void	cpu_broadcast_ipi(int);
+
+void	cpu_boot_secondary_processors(void);
 
 #endif /* _KERNEL */
 

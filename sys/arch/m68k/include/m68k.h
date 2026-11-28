@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.39 2026/10/31 20:59:27 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.40 2026/11/28 01:35:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -211,6 +211,11 @@ int	dma_cachectl(void *, int);
 int	kvtop(void *);
 void	physaccess(void *, void *, int, int);
 void	physunaccess(void *, int);
+
+/* MP support routines. */
+extern char ipi_intrstub[];
+void	ipi_poll(void);
+void	machine_ipi_doorbell(unsigned int);
 
 #endif /* _KERNEL */
 #endif /* _M68K_M68K_H_ */
